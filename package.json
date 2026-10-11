@@ -1,6 +1,7 @@
 {
   "name": "EnglishComm",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
