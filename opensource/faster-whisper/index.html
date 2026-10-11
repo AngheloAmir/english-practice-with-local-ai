@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faster-Whisper STT - API Testbench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+            <h1 class="text-base font-bold text-white tracking-wide">Faster-Whisper <span class="text-xs font-normal text-gray-400 ml-1">STT & Pronunciation Testbench</span></h1>
+        </div>
+        <div class="text-xs font-mono bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300">
+            Engine: <span class="text-emerald-400">http://localhost:8000</span>
+        </div>
+    </header>
+
+    <!-- Main 2-Column Layout -->
+    <main class="flex-1 max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Column 1: Testing Area -->
+        <section class="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xl">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Testing Area</h2>
+                    <span class="text-xs text-blue-400 font-mono">model: faster-whisper-base</span>
+                </div>
+
+                <!-- Record / Upload Area -->
+                <div class="space-y-3">
+                    <div class="bg-gray-950 border border-gray-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                        <button id="recordBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium text-xs transition-all shadow active:scale-95">
+                            <span id="recordDot" class="w-2.5 h-2.5 bg-white rounded-full"></span>
+                            <span id="recordText">Record Microphone</span>
+                        </button>
+                        <span id="recordTimer" class="font-mono text-xs text-gray-400">00:00</span>
+                        <input type="file" id="audioFileInput" accept="audio/*" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-gray-800 file:text-blue-300 hover:file:bg-gray-700 cursor-pointer">
+                    </div>
+
+                    <div id="playerContainer" class="hidden">
+                        <audio id="audioPreview" controls class="w-full h-9 rounded-lg"></audio>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <label class="block text-[11px] text-gray-400 mb-1">Model</label>
+                        <select id="modelSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+                            <option value="Systran/faster-whisper-base" selected>faster-whisper-base (~140MB)</option>
+                            <option value="Systran/faster-whisper-tiny">faster-whisper-tiny (~75MB)</option>
+                        </select>
+                    </div>
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <label class="block text-[11px] text-gray-400 mb-1">Language</label>
+                        <input type="text" id="langInput" value="en" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none font-mono">
+                    </div>
+                </div>
+
+                <!-- Run Button -->
+                <button id="transcribeBtn" disabled class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99]">
+                    <span id="btnSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span id="btnText">Transcribe Audio</span>
+                </button>
+
+                <!-- Output Box -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Transcription & Word Confidence</label>
+                        <span id="latencyBadge" class="text-[11px] font-mono text-gray-500">Record or upload audio</span>
+                    </div>
+                    <div id="outputContainer" class="p-3 bg-gray-950 border border-gray-800 rounded-xl min-h-[140px] max-h-[220px] overflow-y-auto text-xs text-gray-200 font-mono whitespace-pre-wrap leading-relaxed shadow-inner">Record audio to see transcript and acoustic scores.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 2: Live Fetch Example & Backend Usage -->
+        <section class="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xl">
+            <div class="space-y-3 flex-1 flex flex-col">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">2. Backend Code & Fetch Usage</h2>
+                    <button id="copyBtn" class="text-xs px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-blue-300 transition-colors flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-8a2 2 0 01-2-2h-8a2 2 0 01-2 2v8a2 2 0 012 2z" />
+                        </svg>
+                        <span>Copy Code</span>
+                    </button>
+                </div>
+
+                <p class="text-xs text-gray-400">Live code dynamically generated based on current settings. Copy & paste directly into your backend or client code:</p>
+
+                <!-- Code Container -->
+                <pre class="flex-1 bg-gray-950 p-4 rounded-xl border border-gray-800 font-mono text-xs text-emerald-400 overflow-x-auto overflow-y-auto leading-relaxed shadow-inner select-all"><code id="codeSnippet"></code></pre>
+            </div>
+
+            <div class="text-[11px] text-gray-500 border-t border-gray-800/80 pt-2 flex justify-between">
+                <span>Direct Endpoint: <code class="text-gray-400">POST http://localhost:8000/v1/audio/transcriptions</code></span>
+                <span>Format: <code class="text-gray-400">multipart/form-data</code></span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const recordBtn = document.getElementById('recordBtn');
+        const recordText = document.getElementById('recordText');
+        const recordDot = document.getElementById('recordDot');
+        const recordTimer = document.getElementById('recordTimer');
+        const audioFileInput = document.getElementById('audioFileInput');
+        const playerContainer = document.getElementById('playerContainer');
+        const audioPreview = document.getElementById('audioPreview');
+        const modelSelect = document.getElementById('modelSelect');
+        const langInput = document.getElementById('langInput');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnText = document.getElementById('btnText');
+        const outputContainer = document.getElementById('outputContainer');
+        const latencyBadge = document.getElementById('latencyBadge');
+        const codeSnippet = document.getElementById('codeSnippet');
+        const copyBtn = document.getElementById('copyBtn');
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordedBlob = null;
+        let timerInterval = null;
+        let seconds = 0;
+
+        // Dynamic code generation
+        function updateCodeSnippet() {
+            const model = modelSelect.value;
+            const lang = langInput.value.trim() || 'en';
+
+            const code = `// Backend / Client Integration: Transcribe Audio
+const formData = new FormData();
+// audioBlob can be a Blob from browser mic or fs.createReadStream() in Node.js
+formData.append('file', audioBlob, 'audio.wav');
+formData.append('model', '${model}');
+formData.append('language', '${lang}');
+formData.append('temperature', '0.0'); // 0.0 forces strict acoustic decoding
+formData.append('response_format', 'verbose_json');
+formData.append('timestamp_granularities[]', 'word');
+
+const response = await fetch('http://localhost:8000/v1/audio/transcriptions', {
+  method: 'POST',
+  body: formData
+});
+
+const data = await response.json();
+console.log('Transcript:', data.text);
+console.log('Word Breakdown:', data.words);`;
+
+            codeSnippet.textContent = code;
+        }
+
+        modelSelect.addEventListener('change', updateCodeSnippet);
+        langInput.addEventListener('input', updateCodeSnippet);
+        updateCodeSnippet();
+
+        // Copy button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(codeSnippet.textContent).then(() => {
+                const prev = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<span>✓ Copied!</span>';
+                setTimeout(() => copyBtn.innerHTML = prev, 1500);
+            });
+        });
+
+        // Recording Logic
+        recordBtn.addEventListener('click', async () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                clearInterval(timerInterval);
+                recordBtn.classList.replace('bg-amber-600', 'bg-red-600');
+                recordText.textContent = 'Record Again';
+                recordDot.classList.remove('animate-ping');
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        audioPreview.src = URL.createObjectURL(recordedBlob);
+                        playerContainer.classList.remove('hidden');
+                        transcribeBtn.disabled = false;
+                        stream.getTracks().forEach(t => t.stop());
+                    };
+
+                    mediaRecorder.start();
+                    seconds = 0;
+                    recordTimer.textContent = '00:00';
+                    timerInterval = setInterval(() => {
+                        seconds++;
+                        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+                        const s = String(seconds % 60).padStart(2, '0');
+                        recordTimer.textContent = `${m}:${s}`;
+                    }, 1000);
+
+                    recordBtn.classList.replace('bg-red-600', 'bg-amber-600');
+                    recordText.textContent = 'Stop Recording';
+                    recordDot.classList.add('animate-ping');
+                } catch (err) {
+                    alert('Mic error: ' + err.message);
+                }
+            }
+        });
+
+        audioFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                recordedBlob = file;
+                audioPreview.src = URL.createObjectURL(file);
+                playerContainer.classList.remove('hidden');
+                transcribeBtn.disabled = false;
+            }
+        });
+
+        // Transcribe action
+        transcribeBtn.addEventListener('click', async () => {
+            if (!recordedBlob) return;
+
+            transcribeBtn.disabled = true;
+            btnSpinner.classList.remove('hidden');
+            btnText.textContent = 'Transcribing...';
+            latencyBadge.textContent = 'Processing...';
+
+            const startTime = performance.now();
+            const formData = new FormData();
+            formData.append('file', recordedBlob, 'audio.webm');
+            formData.append('model', modelSelect.value);
+            formData.append('language', langInput.value.trim() || 'en');
+            formData.append('temperature', '0.0');
+            formData.append('response_format', 'verbose_json');
+            formData.append('timestamp_granularities[]', 'word');
+
+            try {
+                // Uses relative path through server.js proxy
+                const response = await fetch('/v1/audio/transcriptions', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const txt = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${txt}`);
+                }
+
+                const data = await response.json();
+                const latency = Math.round(performance.now() - startTime);
+                latencyBadge.textContent = `${latency} ms`;
+
+                let html = `<div class="mb-2 text-white font-bold text-sm">"${data.text || '(No speech)'}"</div>`;
+                if (data.words && data.words.length > 0) {
+                    html += '<div class="flex flex-wrap gap-1.5 mt-2">';
+                    data.words.forEach(w => {
+                        const prob = w.probability !== undefined ? w.probability : 0.85;
+                        const pct = Math.round(prob * 100);
+                        const colorClass = prob >= 0.8 ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : (prob >= 0.6 ? 'bg-amber-950 text-amber-300 border-amber-800' : 'bg-red-950 text-red-300 border-red-800');
+                        html += `<span class="px-2 py-0.5 rounded text-[11px] border ${colorClass}">${w.word} <span class="opacity-60 text-[9px]">${pct}%</span></span>`;
+                    });
+                    html += '</div>';
+                }
+                outputContainer.innerHTML = html;
+            } catch (err) {
+                outputContainer.textContent = `Error: ${err.message}`;
+                latencyBadge.textContent = 'Failed';
+            } finally {
+                transcribeBtn.disabled = false;
+                btnSpinner.classList.add('hidden');
+                btnText.textContent = 'Transcribe Audio';
+            }
+        });
+    </script>
+</body>
+</html>

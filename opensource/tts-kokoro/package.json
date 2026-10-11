@@ -1,0 +1,17 @@
+{
+  "name": "tts-kokoro-service",
+  "version": "1.0.0",
+  "description": "Zero-config Kokoro-82M TTS service for native English speech generation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "stop": "node -e 'const fs=require(\"fs\"); try{const p=JSON.parse(fs.readFileSync(\".runtime.json\")).port; fetch(\"http://localhost:\"+p+\"/stop\").catch(e=>{})}catch(e){}'"
+  },
+  "keywords": [
+    "tts",
+    "kokoro",
+    "speech",
+    "text-to-speech"
+  ],
+  "license": "ISC"
+}

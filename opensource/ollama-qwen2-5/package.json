@@ -1,0 +1,11 @@
+{
+  "name": "ollama-qwen2.5",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "stop": "node -e 'const fs=require(\"fs\"); try{const p=JSON.parse(fs.readFileSync(\".runtime.json\")).port; fetch(\"http://localhost:\"+p+\"/stop\").catch(e=>{})}catch(e){}'",
+    "pull:qwen": "./scripts/pull-qwen.sh",
+    "pull:phi3": "./scripts/pull-phi3.sh"
+  }
+}

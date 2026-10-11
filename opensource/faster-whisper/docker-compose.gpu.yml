@@ -1,0 +1,10 @@
+services:
+  faster-whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

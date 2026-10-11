@@ -1,0 +1,72 @@
+{
+    "notes": "",
+    "crudtest": [
+        {
+            "category": "Internal CRUD Test",
+            "devurl": "",
+            "produrl": "",
+            "items": [
+                {
+                    "label": "Ping the Tool Server",
+                    "route": "/ping",
+                    "methods": "GET",
+                    "description": "Ping the tool server to check if it is running.",
+                    "sampleInput": "{}",
+                    "suggested": [],
+                    "expectedOutcome": "# You should see the word \"pong\" as a message \n\n{\n  \"message\": \"pong\"\n}"
+                },
+                {
+                    "label": "Check Post",
+                    "route": "/post",
+                    "methods": "POST",
+                    "description": "Send a POST request to check if it sending correctly",
+                    "sampleInput": "{\n \"data\": \"test\",\n \"message\": \"test\"\n}",
+                    "suggested": [
+                        {
+                            "name": "Customer Data",
+                            "urlparams": "",
+                            "content": "{\n \"name\": \"Demo Customer\",\n \"email\": \"demo@test.com\",\n \"phone\": \"123456789\",\n \"icon\": \"test icon\"\n}"
+                        }
+                    ],
+                    "expectedOutcome": "# Note \nYou should see the mirror of your inputs"
+                },
+                {
+                    "label": "Check Stream",
+                    "route": "/stream",
+                    "methods": "STREAM",
+                    "description": "Send a stream request to check if it sending correctly",
+                    "sampleInput": "{ }",
+                    "suggested": [
+                        {
+                            "name": "I Wandered Lonely as a Cloud",
+                            "urlparams": "poem=I Wandered Lonely as a Cloud",
+                            "content": "{}"
+                        },
+                        {
+                            "name": "The Sun Has Long Been Set",
+                            "urlparams": "poem=The Sun Has Long Been Set",
+                            "content": "{}"
+                        }
+                    ],
+                    "expectedOutcome": "# Note \nYou should see the stream of words"
+                }
+            ]
+        },
+        {
+            "category": "Server",
+            "devurl": "http://localhost:3500",
+            "produrl": "",
+            "items": [
+                {
+                    "label": "Test",
+                    "route": "/hello",
+                    "methods": "GET",
+                    "description": "Test if the server is working correctly",
+                    "sampleInput": "{}",
+                    "expectedOutcome": "",
+                    "suggested": []
+                }
+            ]
+        }
+    ]
+}

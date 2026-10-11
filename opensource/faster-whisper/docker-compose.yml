@@ -1,0 +1,15 @@
+services:
+  faster-whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    container_name: ${PROJECT_NAME:-monotime}-faster-whisper
+    ports:
+      - "8000:8000"
+    environment:
+      - WHISPER__MODEL=Systran/faster-whisper-base
+      - LOG_LEVEL=info
+    volumes:
+      - whisper_cache:/root/.cache/huggingface
+    restart: always
+
+volumes:
+  whisper_cache:

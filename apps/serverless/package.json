@@ -1,0 +1,31 @@
+{
+  "name": "serverless",
+  "version": "1.0.0",
+  "description": "Serverless Express TS",
+  "fontawesomeIcon": "fab fa-aws text-orange-500",
+  "scripts": {
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/local.ts",
+    "build": "tsup",
+    "start": "node dist/local.js",
+    "stop": "npx -y kill-port 3500"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "serverless-http": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  }
+}

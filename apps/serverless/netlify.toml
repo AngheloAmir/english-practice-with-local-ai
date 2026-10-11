@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  functions = "functions"
+
+# Redirect all traffic to the lambda function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true

@@ -1,0 +1,21 @@
+{
+  "name": "EnglishComm",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "packageManager": "npm@11.19.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2.11.7"
+  },
+  "dependencies": {
+    "zustand": "^5.0.15"
+  }
+}

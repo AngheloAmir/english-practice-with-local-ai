@@ -1,0 +1,17 @@
+{
+  "name": "faster-whisper-service",
+  "version": "1.0.0",
+  "description": "Zero-config Faster-Whisper STT service for strict speech recognition and pronunciation testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "stop": "node -e 'const fs=require(\"fs\"); try{const p=JSON.parse(fs.readFileSync(\".runtime.json\")).port; fetch(\"http://localhost:\"+p+\"/stop\").catch(e=>{})}catch(e){}'"
+  },
+  "keywords": [
+    "speech-to-text",
+    "faster-whisper",
+    "pronunciation",
+    "stt"
+  ],
+  "license": "ISC"
+}

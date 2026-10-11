@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kokoro-82M TTS - API Testbench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></span>
+            <h1 class="text-base font-bold text-white tracking-wide">Kokoro-82M <span class="text-xs font-normal text-gray-400 ml-1">Native English TTS Testbench</span></h1>
+        </div>
+        <div class="text-xs font-mono bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300">
+            Engine: <span class="text-purple-400">http://localhost:8880</span>
+        </div>
+    </header>
+
+    <!-- Main 2-Column Layout -->
+    <main class="flex-1 max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Column 1: Testing Area -->
+        <section class="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xl">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Testing Area</h2>
+                    <span class="text-xs text-purple-400 font-mono">model: kokoro-82m</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1.5">Text to Speak</label>
+                    <textarea 
+                        id="ttsInput" 
+                        rows="4" 
+                        class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed font-mono resize-none shadow-inner"
+                    >Hello! Welcome to English Communication. How can I assist you with your pronunciation today?</textarea>
+                </div>
+
+                <!-- Parameters Grid -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80 col-span-2 sm:col-span-1">
+                        <label class="block text-[11px] text-gray-400 mb-1">Voice & Accent</label>
+                        <select id="voiceSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+                            <optgroup label="🇺🇸 US Voices">
+                                <option value="af_heart" selected>af_heart (Natural Female)</option>
+                                <option value="af_bella">af_bella (Friendly Female)</option>
+                                <option value="am_adam">am_adam (Deep Male)</option>
+                                <option value="am_michael">am_michael (Conversational Male)</option>
+                            </optgroup>
+                            <optgroup label="🇬🇧 UK Voices">
+                                <option value="bf_alice">bf_alice (BBC Clear Female)</option>
+                                <option value="bf_emma">bf_emma (Modern UK Female)</option>
+                                <option value="bm_george">bm_george (Classic UK Male)</option>
+                                <option value="bm_lewis">bm_lewis (Contemporary UK Male)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <label class="block text-[11px] text-gray-400 mb-1">Speed</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="speedSlider" min="0.7" max="1.3" step="0.05" value="1.0" class="w-full accent-purple-500">
+                            <span id="speedVal" class="text-xs font-mono text-gray-300">1.00x</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <label class="block text-[11px] text-gray-400 mb-1">Format</label>
+                        <select id="formatSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+                            <option value="mp3" selected>mp3</option>
+                            <option value="wav">wav</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Run Button -->
+                <button id="generateBtn" class="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99]">
+                    <span id="btnSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span id="btnText">Synthesize Speech</span>
+                </button>
+
+                <!-- Output Box / Audio Player -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Audio Player Output</label>
+                        <span id="latencyBadge" class="text-[11px] font-mono text-gray-500">Ready</span>
+                    </div>
+                    <div class="p-3 bg-gray-950 border border-gray-800 rounded-xl space-y-2 shadow-inner">
+                        <audio id="audioPlayer" controls class="w-full h-9 rounded-lg"></audio>
+                        <div class="flex justify-end">
+                            <a id="downloadLink" download="speech.mp3" class="hidden text-[11px] px-2.5 py-1 rounded bg-gray-900 hover:bg-gray-800 text-purple-300 border border-gray-700">Download Audio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 2: Live Fetch Example & Backend Usage -->
+        <section class="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xl">
+            <div class="space-y-3 flex-1 flex flex-col">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">2. Backend Code & Fetch Usage</h2>
+                    <button id="copyBtn" class="text-xs px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-purple-300 transition-colors flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-8a2 2 0 01-2-2h-8a2 2 0 01-2 2v8a2 2 0 012 2z" />
+                        </svg>
+                        <span>Copy Code</span>
+                    </button>
+                </div>
+
+                <p class="text-xs text-gray-400">Live code dynamically generated based on your inputs. Copy & paste directly into your backend or client code:</p>
+
+                <!-- Code Container -->
+                <pre class="flex-1 bg-gray-950 p-4 rounded-xl border border-gray-800 font-mono text-xs text-emerald-400 overflow-x-auto overflow-y-auto leading-relaxed shadow-inner select-all"><code id="codeSnippet"></code></pre>
+            </div>
+
+            <div class="text-[11px] text-gray-500 border-t border-gray-800/80 pt-2 flex justify-between">
+                <span>Direct Endpoint: <code class="text-gray-400">POST http://localhost:8880/v1/audio/speech</code></span>
+                <span>Payload: <code class="text-gray-400">JSON (OpenAI-compatible)</code></span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const ttsInput = document.getElementById('ttsInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedVal = document.getElementById('speedVal');
+        const formatSelect = document.getElementById('formatSelect');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnText = document.getElementById('btnText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadLink = document.getElementById('downloadLink');
+        const latencyBadge = document.getElementById('latencyBadge');
+        const codeSnippet = document.getElementById('codeSnippet');
+        const copyBtn = document.getElementById('copyBtn');
+
+        // Dynamic code generation
+        function updateCodeSnippet() {
+            const text = ttsInput.value.trim();
+            const voice = voiceSelect.value;
+            const speed = parseFloat(speedSlider.value);
+            const format = formatSelect.value;
+
+            const code = `// Backend / Client Integration: Synthesize Speech
+const response = await fetch('http://localhost:8880/v1/audio/speech', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    model: 'kokoro',
+    input: ${JSON.stringify(text)},
+    voice: '${voice}',
+    speed: ${speed},
+    response_format: '${format}'
+  })
+});
+
+// Convert response to audio blob for playback or saving to disk
+const audioBlob = await response.blob();
+const audioUrl = URL.createObjectURL(audioBlob);
+const audio = new Audio(audioUrl);
+audio.play();`;
+
+            codeSnippet.textContent = code;
+        }
+
+        ttsInput.addEventListener('input', updateCodeSnippet);
+        voiceSelect.addEventListener('change', updateCodeSnippet);
+        speedSlider.addEventListener('input', (e) => {
+            speedVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`;
+            updateCodeSnippet();
+        });
+        formatSelect.addEventListener('change', updateCodeSnippet);
+        updateCodeSnippet();
+
+        // Copy button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(codeSnippet.textContent).then(() => {
+                const prev = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<span>✓ Copied!</span>';
+                setTimeout(() => copyBtn.innerHTML = prev, 1500);
+            });
+        });
+
+        // Run Request
+        generateBtn.addEventListener('click', async () => {
+            const text = ttsInput.value.trim();
+            if (!text) return;
+
+            generateBtn.disabled = true;
+            btnSpinner.classList.remove('hidden');
+            btnText.textContent = 'Synthesizing...';
+            latencyBadge.textContent = 'Generating...';
+
+            const startTime = performance.now();
+            const voice = voiceSelect.value;
+            const speed = parseFloat(speedSlider.value);
+            const format = formatSelect.value;
+
+            try {
+                // Uses relative path through server.js proxy
+                const response = await fetch('/v1/audio/speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'kokoro',
+                        input: text,
+                        voice: voice,
+                        speed: speed,
+                        response_format: format
+                    })
+                });
+
+                if (!response.ok) {
+                    const txt = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${txt}`);
+                }
+
+                const blob = await response.blob();
+                const latency = Math.round(performance.now() - startTime);
+
+                const url = URL.createObjectURL(blob);
+                audioPlayer.src = url;
+                downloadLink.href = url;
+                downloadLink.download = `speech-${voice}.${format}`;
+                downloadLink.classList.remove('hidden');
+
+                latencyBadge.textContent = `Generated in ${latency} ms`;
+                audioPlayer.play().catch(() => {});
+            } catch (err) {
+                alert('TTS error: ' + err.message);
+                latencyBadge.textContent = 'Failed';
+            } finally {
+                generateBtn.disabled = false;
+                btnSpinner.classList.add('hidden');
+                btnText.textContent = 'Synthesize Speech';
+            }
+        });
+    </script>
+</body>
+</html>
