@@ -11,7 +11,7 @@ services:
       - OLLAMA_KEEP_ALIVE=15m
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
-    restart: always
+    restart: unless-stopped
 
 volumes:
   ollama_data:
