@@ -1,4 +1,4 @@
-import { useApp } from "../app";
+import { useApp } from "../state/app";
 
 export default function Navigation() {
     const currentModuleID = useApp.use.currentModuleID();

@@ -1,152 +1,55 @@
-// ==========================================
-// 1. Ollama / Qwen 2.5 3B (LLM & Grammar)
-// ==========================================
-
-export type ChatRole = 'system' | 'user' | 'assistant';
-
-export interface OllamaChatMessage {
+export type ChatRole = "system" | "user" | "assistant";
+export type ChatMessage = {
   role: ChatRole;
   content: string;
 }
 
-export interface OllamaChatOptions {
-  temperature?: number;
-  num_ctx?: number;
-  top_p?: number;
-  top_k?: number;
-  seed?: number;
-  stop?: string[];
-}
-
-export interface OlamaQwenRequest {
-  model: 'qwen2.5:3b' | string;
-  messages: OllamaChatMessage[];
-  format?: 'json' | string;
+export interface OllamaChatBody {
+  model: 'qwen2.5:3b';
+  messages: ChatMessage[];
+  output?: 'text' | 'json';
+  outputformat?: string | Record<string, any>;
   stream?: boolean;
-  options?: OllamaChatOptions;
-  keep_alive?: string; // e.g. "15m"
+  options?: {
+    temperature?: number;
+    num_ctx?:     number;
+  };
 }
 
-export interface OlamaQwenResponse {
-  model: string;
-  created_at: string;
-  message: OllamaChatMessage;
-  done: boolean;
-  done_reason?: string;
-  total_duration?: number;
-  load_duration?: number;
-  prompt_eval_count?: number;
-  prompt_eval_duration?: number;
-  eval_count?: number;
-  eval_duration?: number;
-}
+//===================================================================
+export type KororoTTSBody = {
+  voice: 'af_heart' | 'af_bella' | 'af_sarah' | 'af_nicole' | 'am_adam' | 'am_michael' | 'bf_alice' | 'bf_emma' | 'bm_george' | 'bm_lewis';
+  text:  string | string[];
+  speed: number;
+  response_format?: 'mp3' | 'wav' | 'opus' | 'flac' | 'aac';
+};
 
-/**
- * Structured schema when prompting Qwen to evaluate grammar in JSON mode
- */
-export interface GrammarErrorItem {
-  original: string;
-  correction: string;
-  reason: string;
-  category?: 'grammar' | 'spelling' | 'punctuation' | 'word_choice';
-}
+// [text, audioBase64DataUri]
+// Example: ["cat is a good pet", "data:audio/mp3;base64,..."] or ["cat", "data:audio/mp3;base64,..."]
+export type KororoAudioTuple = [text: string, audio: string];
 
-export interface GrammarEvaluationResult {
-  is_correct: boolean;
-  score?: number; // 0-100
-  original_text?: string;
-  corrected_sentence: string;
-  errors?: GrammarErrorItem[];
-  improved_alternative?: string;
-  explanation?: string;
-}
+// Single output: binary audio stream (Blob | ArrayBuffer)
+// Multiple items output: array of tuples where [0] is full sentence, followed by each word
+export type KororoResponse = KororoAudioTuple[] | Blob | ArrayBuffer;
 
-// ==========================================
-// 2. Faster-Whisper (STT & Pronunciation)
-// ==========================================
+//===================================================================
+export type FasterWhisperModel = 'Systran/faster-whisper-base' | 'Systran/faster-whisper-tiny';
 
-export type FasterWhisperModel = 'Systran/faster-whisper-base' | 'Systran/faster-whisper-tiny' | string;
-export type FasterWhisperFormat = 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';
-
-export interface FasterWhisperRequest {
-  /**
-   * Audio file or blob to transcribe (sent via multipart/form-data)
-   */
-  file: Blob | File | any;
+export type FasterWhisperSTTBody = {
   model?: FasterWhisperModel;
-  language?: string; // e.g. "en"
-  temperature?: number; // 0.0 for strict acoustic decoding without LLM guessing
-  response_format?: FasterWhisperFormat;
-  timestamp_granularities?: ('word' | 'segment')[];
-  prompt?: string;
-}
-
-export interface FasterWhisperWord {
-  word: string;
-  start: number;
-  end: number;
+  language?: string; // default: "en"
   /**
-   * Acoustic confidence probability (0.0 to 1.0)
-   * Values < 0.60 indicate mumbled or mispronounced speech
+   * Decoding temperature (0.0 to 1.0):
+   * 0.0 = Strict acoustic decoding (no guessing/hallucination, ideal for pronunciation scoring)
+   * > 0.0 = Allows language model guessing/flexibility
    */
-  probability: number;
-}
+  temperature?: number;
+  /**
+   * Audio input: Base64 data string, binary buffer, or File/Blob in FormData
+   */
+  audio?: string | Blob | any;
+};
 
-export interface FasterWhisperSegment {
-  id: number;
-  seek: number;
-  start: number;
-  end: number;
-  text: string;
-  tokens: number[];
-  temperature: number;
-  avg_logprob: number;
-  compression_ratio: number;
-  no_speech_prob: number;
-  words?: FasterWhisperWord[];
-}
+//===================================================================
 
-export interface FasterWhisperResponse {
-  task: 'transcribe';
-  language: string;
-  duration: number;
-  text: string;
-  words?: FasterWhisperWord[];
-  segments?: FasterWhisperSegment[];
-}
 
-// ==========================================
-// 3. Kokoro-82M (Text-to-Speech)
-// ==========================================
-
-export type KokoroVoice =
-  // American English (Female)
-  | 'af_heart'
-  | 'af_bella'
-  | 'af_sarah'
-  | 'af_nicole'
-  // American English (Male)
-  | 'am_adam'
-  | 'am_michael'
-  // British English (Female)
-  | 'bf_alice'
-  | 'bf_emma'
-  // British English (Male)
-  | 'bm_george'
-  | 'bm_lewis'
-  | string;
-
-export type KokoroAudioFormat = 'mp3' | 'wav' | 'opus' | 'flac' | 'aac';
-
-export interface KokoroRequest {
-  model?: 'kokoro' | string;
-  input: string;
-  voice: KokoroVoice;
-  speed?: number; // 0.5 to 2.0 (default 1.0)
-  response_format?: KokoroAudioFormat;
-}
-
-/**
- * The endpoint returns binary audio stream (audio/mpeg or audio/wav)
- */
-export type KokoroResponse = Blob | ArrayBuffer | any;

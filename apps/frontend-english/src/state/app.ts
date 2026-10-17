@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { createSelectors } from './lib/_zustand';
-import type { SoftwareModule } from './lib/_types';
+import { createSelectors } from '../lib/_zustand';
+import type { SoftwareModule } from '../lib/_types';
 
 interface AppState {
     currentModuleID: SoftwareModule["id"]

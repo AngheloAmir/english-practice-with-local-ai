@@ -1,6 +1,6 @@
-import Navigation from "./state/components/Navigation";
-import Header from "./state/components/Header";
-import Sample from "./state/modules/Sample";
+import Navigation from "./components/Navigation";
+import Header from "./components/Header";
+import Sample from "./modules/Sample";
 
 export default function App() {
   return (

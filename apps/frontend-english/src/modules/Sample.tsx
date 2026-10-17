@@ -1,7 +1,7 @@
 
 
 import { useState, useEffect } from "react";
-import { useApp } from "../app";
+import { useApp } from "../state/app";
 import { SOFTWARE_MODULES } from "../lib/_config";
 
 interface Message {

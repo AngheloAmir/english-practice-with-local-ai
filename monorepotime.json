@@ -65,6 +65,59 @@
                     "sampleInput": "{}",
                     "expectedOutcome": "",
                     "suggested": []
+                },
+                {
+                    "label": "ChatStream",
+                    "route": "/service/chat/stream",
+                    "methods": "STREAM",
+                    "description": "Chat Stream with Olama",
+                    "sampleInput": "{\n  \"model\": \"qwen2.5:3b\",\n  \"messages\": [\n    { \"role\": \"user\", \"content\": \"hi\" }\n  ],\n  \"options\": {\n    \"temperature\": 1,\n    \"num_ctx\":     2048\n  }\n}\n",
+                    "expectedOutcome": "# Note\nYou should see the AI streaming response in real-time.",
+                    "suggested": [
+                        {
+                            "name": "Hi (Query Param)",
+                            "urlparams": "prompt=hi",
+                            "content": "{}"
+                        },
+                        {
+                            "name": "Practice English",
+                            "urlparams": "prompt=Help me practice greeting someone in English",
+                            "content": "{}"
+                        }
+                    ]
+                },
+                {
+                    "label": "TTS",
+                    "route": "/service/tts",
+                    "methods": "GET",
+                    "description": "",
+                    "sampleInput": "{\n    \"voice\": \"af_heart\",\n    \"text\": \"Hello! Welcome to your English pronunciation and practice session.\",\n    \"speed\": 1.0,\n    \"response_format\": \"mp3\"\n  }",
+                    "expectedOutcome": "",
+                    "suggested": [
+                        {
+                            "name": "Multiple",
+                            "urlparams": "",
+                            "content": "{\n    \"voice\": \"af_heart\",\n    \"text\": [ \"Hello\", \"Hi\", \"Welcome\"],\n    \"speed\": 1.0,\n    \"response_format\": \"mp3\"\n  }"
+                        }
+                    ]
+                },
+                {
+                    "label": "STT",
+                    "route": "/service/stt",
+                    "methods": "GET",
+                    "description": "",
+                    "sampleInput": "{}",
+                    "expectedOutcome": "",
+                    "suggested": []
+                },
+                {
+                    "label": "ChatPost",
+                    "route": "/service/chat",
+                    "methods": "POST",
+                    "description": "Chat POST with Ollama (returns full JSON response)",
+                    "sampleInput": "{\n  \"model\": \"qwen2.5:3b\",\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"outputformat: { score (1 to 10), reason :string } based on the user input sentence. You goal is to score the grammar\" },\n    { \"role\": \"user\", \"content\": \"what is the beggining of the our time and the key reason behind it\" }\n  ],\n  \"options\": {\n    \"temperature\": 0.5,\n    \"num_ctx\": 2048\n  }\n}\n",
+                    "expectedOutcome": "# Note\nYou should receive a complete JSON response.",
+                    "suggested": []
                 }
             ]
         }

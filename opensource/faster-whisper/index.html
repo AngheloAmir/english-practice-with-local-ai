@@ -42,7 +42,10 @@
                             <span id="recordDot" class="w-2.5 h-2.5 bg-white rounded-full"></span>
                             <span id="recordText">Record Microphone</span>
                         </button>
-                        <span id="recordTimer" class="font-mono text-xs text-gray-400">00:00</span>
+                        <div class="flex items-center gap-3">
+                            <span id="recordTimer" class="font-mono text-xs text-gray-400">00:00</span>
+                            <span id="micStatusBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-mono">Mic Hot</span>
+                        </div>
                         <input type="file" id="audioFileInput" accept="audio/*" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-gray-800 file:text-blue-300 hover:file:bg-gray-700 cursor-pointer">
                     </div>
 
@@ -52,7 +55,7 @@
                 </div>
 
                 <!-- Options -->
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                         <label class="block text-[11px] text-gray-400 mb-1">Model</label>
                         <select id="modelSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
@@ -63,6 +66,15 @@
                     <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                         <label class="block text-[11px] text-gray-400 mb-1">Language</label>
                         <input type="text" id="langInput" value="en" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none font-mono">
+                    </div>
+                    <div class="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <label class="block text-[11px] text-gray-400 mb-1" title="0.0 = Strict acoustic (no guessing), >0 = Allows guessing">Temperature</label>
+                        <select id="tempSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+                            <option value="0.0" selected>0.0 (Strict Acoustic - No Guessing)</option>
+                            <option value="0.2">0.2 (Low Guessing)</option>
+                            <option value="0.5">0.5 (Balanced)</option>
+                            <option value="0.8">0.8 (Creative Guessing)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -120,6 +132,7 @@
         const audioPreview = document.getElementById('audioPreview');
         const modelSelect = document.getElementById('modelSelect');
         const langInput = document.getElementById('langInput');
+        const tempSelect = document.getElementById('tempSelect');
         const transcribeBtn = document.getElementById('transcribeBtn');
         const btnSpinner = document.getElementById('btnSpinner');
         const btnText = document.getElementById('btnText');
@@ -138,6 +151,7 @@
         function updateCodeSnippet() {
             const model = modelSelect.value;
             const lang = langInput.value.trim() || 'en';
+            const temp = tempSelect.value;
 
             const code = `// Backend / Client Integration: Transcribe Audio
 const formData = new FormData();
@@ -145,7 +159,7 @@ const formData = new FormData();
 formData.append('file', audioBlob, 'audio.wav');
 formData.append('model', '${model}');
 formData.append('language', '${lang}');
-formData.append('temperature', '0.0'); // 0.0 forces strict acoustic decoding
+formData.append('temperature', '${temp}'); // ${temp === '0.0' ? '0.0 forces strict acoustic decoding (no guessing)' : 'temperature allows guessing'}
 formData.append('response_format', 'verbose_json');
 formData.append('timestamp_granularities[]', 'word');
 
@@ -163,6 +177,7 @@ console.log('Word Breakdown:', data.words);`;
 
         modelSelect.addEventListener('change', updateCodeSnippet);
         langInput.addEventListener('input', updateCodeSnippet);
+        tempSelect.addEventListener('change', updateCodeSnippet);
         updateCodeSnippet();
 
         // Copy button
@@ -174,6 +189,25 @@ console.log('Word Breakdown:', data.words);`;
             });
         });
 
+        // Keep persistent microphone stream active (avoids headset sleep/wake delay)
+        let activeAudioStream = null;
+        const micStatusBadge = document.getElementById('micStatusBadge');
+
+        async function getPersistentAudioStream() {
+            if (activeAudioStream && activeAudioStream.active && activeAudioStream.getAudioTracks().some(t => t.readyState === 'live')) {
+                return activeAudioStream;
+            }
+            activeAudioStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: false,
+                    autoGainControl: true
+                }
+            });
+            if (micStatusBadge) micStatusBadge.classList.remove('hidden');
+            return activeAudioStream;
+        }
+
         // Recording Logic
         recordBtn.addEventListener('click', async () => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -184,7 +218,7 @@ console.log('Word Breakdown:', data.words);`;
                 recordDot.classList.remove('animate-ping');
             } else {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const stream = await getPersistentAudioStream();
                     audioChunks = [];
                     mediaRecorder = new MediaRecorder(stream);
 
@@ -197,7 +231,8 @@ console.log('Word Breakdown:', data.words);`;
                         audioPreview.src = URL.createObjectURL(recordedBlob);
                         playerContainer.classList.remove('hidden');
                         transcribeBtn.disabled = false;
-                        stream.getTracks().forEach(t => t.stop());
+                        // Note: We intentionally do NOT stop activeAudioStream tracks here
+                        // so the mic stays hot and eliminates headset wake-up delay!
                     };
 
                     mediaRecorder.start();
@@ -243,7 +278,7 @@ console.log('Word Breakdown:', data.words);`;
             formData.append('file', recordedBlob, 'audio.webm');
             formData.append('model', modelSelect.value);
             formData.append('language', langInput.value.trim() || 'en');
-            formData.append('temperature', '0.0');
+            formData.append('temperature', tempSelect.value || '0.0');
             formData.append('response_format', 'verbose_json');
             formData.append('timestamp_granularities[]', 'word');
 
