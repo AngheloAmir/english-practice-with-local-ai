@@ -60,7 +60,7 @@ export default function GrammarExamView() {
     }
   };
 
-  const handleNext = async () => {
+  const handleNext = async (_answer?: string, _response?: AIResponseData | null) => {
     setUserAnswer("");
     await generateQuestionGrammar();
   };
@@ -73,7 +73,6 @@ export default function GrammarExamView() {
   return (
     <PlayExam
       title="Grammar Practice"
-      subtitle={`Topic: ${grammarsubject} • Difficulty: ${grammardiffculty}`}
       prompt={parsedQuestion.prompt}
       category={parsedQuestion.category || grammarsubject}
       difficulty={parsedQuestion.difficulty || grammardiffculty}
@@ -82,6 +81,7 @@ export default function GrammarExamView() {
       onSubmitAnswer={handleSubmit}
       isSubmitting={isSubmitting}
       aiResponse={parsedAiResponse}
+      onNextQuestion={handleNext}
       onNext={handleNext}
       onExit={handleExit}
     />
