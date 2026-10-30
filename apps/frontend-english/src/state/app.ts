@@ -1,20 +1,20 @@
 import { create } from 'zustand';
 import { createSelectors } from '../lib/_zustand';
-import type { SoftwareModule } from '../lib/_types';
 
 interface AppState {
-    currentModuleID: SoftwareModule["id"]
-    setCurrentModuleID: (id: SoftwareModule["id"]) => void
-
-    
+    currentModule: string
+    setCurrentModule: (module: string) => void
+    isDrawerOpen: boolean
+    setIsDrawerOpen: (open: boolean) => void
+    toggleDrawer: () => void
 }
 
-
 const appContext = create<AppState>()((set) => ({
-    currentModuleID: "0",
-    setCurrentModuleID: (id) => set({ currentModuleID: id }),
-
-
+    currentModule: "dashboard",
+    setCurrentModule: (module) => set({ currentModule: module }),
+    isDrawerOpen: false,
+    setIsDrawerOpen: (open) => set({ isDrawerOpen: open }),
+    toggleDrawer: () => set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
 }));
 
 export const useApp = createSelectors(appContext);

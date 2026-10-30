@@ -1,23 +1,22 @@
-import Navigation from "./components/Navigation";
+import SideNavigation from "./components/navigation/SideNavigation";
+import DrawerNavigation from "./components/navigation/DrawerNavigation";
 import Header from "./components/Header";
 import Sample from "./modules/Sample";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#334e57] flex flex-col justify-center items-center p-3 sm:p-5 md:p-8 font-sans antialiased text-slate-800 selection:bg-[#1a7f8b] selection:text-white">
-      {/* Outer Application Frame matching the dark teal aesthetic */}
-      <div className="w-full max-w-[1380px] bg-[#3a5661] rounded-[32px] sm:rounded-[38px] p-3 sm:p-6 shadow-2xl border border-white/10 flex flex-col gap-4 text-white">
+    <div className="h-screen w-screen overflow-hidden bg-[#334e57] font-sans antialiased text-slate-800 selection:bg-[#1a7f8b] selection:text-white flex flex-col">
+       <Header />
+       <DrawerNavigation />
 
-        <Header />
+       <div className="flex md:gap-4 w-full flex-1 min-h-0 px-2 sm:px-3 md:pl-0 md:pr-4 pb-2 sm:pb-3">
+         <SideNavigation />
 
-        <div className="flex gap-2 sm:gap-4 w-full">
-          <Navigation />
-
-          {/* Large Inner Canvas (White with rounded corners, matching the reference photo) */}
-          <Sample />
-        </div>
-
-      </div>
+         {/* Large Inner Canvas (White with rounded corners, matching the reference photo) */}
+         <div className="flex-1 min-h-0 overflow-y-auto">
+           <Sample />
+         </div>
+       </div>
     </div>
   );
 }

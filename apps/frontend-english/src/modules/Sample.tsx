@@ -22,20 +22,20 @@ interface ReadingWord {
 }
 
 export default function Sample() {
-  const currentModuleID = useApp.use.currentModuleID();
-  const setCurrentModuleID = useApp.use.setCurrentModuleID();
+  const currentModule = useApp.use.currentModule();
+  const setCurrentModule = useApp.use.setCurrentModule();
 
-  // Active view: synced with currentModuleID ("1" is reading, "0" is dashboard/chat)
+  // Active view: synced with currentModule ("reading" is reading, "dashboard" is dashboard/chat)
   const [internalTab, setInternalTab] = useState<"chat" | "reading">(
-    currentModuleID === "1" ? "reading" : "chat"
+    currentModule === "reading" ? "reading" : "chat"
   );
 
   const activeTab: "chat" | "reading" =
-    currentModuleID === "1" ? "reading" : currentModuleID === "0" ? "chat" : internalTab;
+    currentModule === "reading" ? "reading" : currentModule === "dashboard" ? "chat" : internalTab;
 
   const setActiveTab = (tab: "chat" | "reading") => {
     setInternalTab(tab);
-    setCurrentModuleID(tab === "reading" ? "1" : "0");
+    setCurrentModule(tab === "reading" ? "reading" : "dashboard");
   };
 
   // Chat state
@@ -157,7 +157,8 @@ export default function Sample() {
   };
 
   const handleModuleClick = (id: string) => {
-    setCurrentModuleID(id);
+    const modName = id === "1" ? "reading" : "dashboard";
+    setCurrentModule(modName);
     if (id === "1") {
       setActiveTab("reading");
     } else {
@@ -207,7 +208,7 @@ export default function Sample() {
                   <button
                     onClick={() => {
                       setActiveTab("chat");
-                      setCurrentModuleID("0");
+                      setCurrentModule("dashboard");
                     }}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                       activeTab === "chat"
@@ -220,7 +221,7 @@ export default function Sample() {
                   <button
                     onClick={() => {
                       setActiveTab("reading");
-                      setCurrentModuleID("1");
+                      setCurrentModule("reading");
                     }}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                       activeTab === "reading"
@@ -619,7 +620,8 @@ export default function Sample() {
                       key={mod.id}
                       onClick={() => handleModuleClick(mod.id)}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                        currentModuleID === mod.id
+                        (currentModule === "reading" && mod.id === "1") ||
+                        (currentModule === "dashboard" && mod.id === "0")
                           ? "bg-[#187e8a] text-white shadow-sm"
                           : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                       }`}
