@@ -10,6 +10,7 @@ Each service operates as an independent Docker container with a Node.js orchestr
 
 | Directory | Engine | Model | Default Port | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
+| **[`practice-app/`](./practice-app)** | Orchestrator App | Multi-model Loop | `3000` | Autonomous pronunciation practice loop with hot mic & LLM scoring |
 | **[`ollama-qwen2-5/`](./ollama-qwen2-5)** | Ollama | `qwen2.5:3b` | `11434` | English grammar, tense correction & structured JSON evaluation |
 | **[`faster-whisper/`](./faster-whisper)** | Speaches (FastAPI) | `faster-whisper-base` | `8000` | Strict acoustic Speech-to-Text & word-level pronunciation scoring |
 | **[`tts-kokoro/`](./tts-kokoro)** | Kokoro-FastAPI | `kokoro-82m` | `8880` | High-fidelity US/UK native speech synthesizer |

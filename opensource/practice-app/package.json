@@ -1,0 +1,18 @@
+{
+  "name": "practice-app",
+  "version": "1.0.0",
+  "description": "Continuous English pronunciation practice loop powered by Ollama Qwen2.5, Kokoro TTS, and Faster-Whisper",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "stop": "node -e 'const fs=require(\"fs\"); try{const p=JSON.parse(fs.readFileSync(\".runtime.json\")).port; fetch(\"http://localhost:\"+p+\"/stop\").catch(e=>{})}catch(e){}'"
+  },
+  "keywords": [
+    "english-practice",
+    "pronunciation",
+    "ollama",
+    "kokoro",
+    "whisper"
+  ],
+  "license": "ISC"
+}

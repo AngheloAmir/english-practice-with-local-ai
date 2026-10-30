@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Practice Loop - Local AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.3; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans select-none">
+
+    <!-- Top Navigation & Global Header -->
+    <header class="bg-gray-900/90 backdrop-blur border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981] animate-pulse"></div>
+            <h1 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                English Pronunciation Practice Loop
+                <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-950 border border-blue-800 text-blue-400">Local AI Engine</span>
+            </h1>
+        </div>
+
+        <!-- Engines Live Status Indicator -->
+        <div class="flex items-center gap-2 text-xs font-mono">
+            <div id="statusOllama" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800/80 border border-gray-700 text-gray-400">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="hidden sm:inline">Ollama:11434</span>
+            </div>
+            <div id="statusTts" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800/80 border border-gray-700 text-gray-400">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="hidden sm:inline">Kokoro:8880</span>
+            </div>
+            <div id="statusWhisper" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-800/80 border border-gray-700 text-gray-400">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="hidden sm:inline">Whisper:8000</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Body: [ Left Panel (Settings & Action) ] + [ Main Center Content (Large Words & Pronunciation) ] -->
+    <div class="flex-1 flex flex-col lg:flex-row w-full min-h-[calc(100vh-53px)]">
+
+        <!-- ========================================== -->
+        <!-- LEFT PANEL: Controls, Voice & Settings     -->
+        <!-- ========================================== -->
+        <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-gray-800 bg-gray-900/70 backdrop-blur p-5 sm:p-6 flex flex-col gap-5 shrink-0 overflow-y-auto">
+            
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 font-mono">Control Panel</h2>
+                <div id="micStatusBadge" class="hidden flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-[11px] font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Mic Hot</span>
+                </div>
+            </div>
+
+            <!-- Prominent Primary Start / Stop Action Button -->
+            <div class="space-y-2">
+                <button id="toggleLoopBtn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base tracking-wide shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer">
+                    <span id="btnIcon" class="text-lg">▶</span>
+                    <span id="btnLabel">Start Practice</span>
+                </button>
+
+                <!-- Compact Sidebar Status Pill -->
+                <div class="flex items-center justify-between text-xs font-mono text-gray-400 bg-gray-950 px-3 py-2 rounded-xl border border-gray-800">
+                    <div class="flex items-center gap-2 truncate">
+                        <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-gray-600 shrink-0"></span>
+                        <span id="statusMessage" class="truncate text-[11px] text-gray-300">Ready</span>
+                    </div>
+                    <span id="attemptBadge" class="text-[10px] text-gray-500 shrink-0 ml-1">0/3</span>
+                </div>
+                <span id="topicBadge" class="hidden"></span>
+            </div>
+
+            <!-- Section 1: Practice Preferences -->
+            <div class="space-y-3">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 font-mono">Session Config</span>
+
+                <!-- Sentence Count -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <label for="sentenceCountInput" class="text-xs font-medium text-gray-300">Sentence Count</label>
+                    <input type="number" id="sentenceCountInput" min="1" max="5" value="1" 
+                           class="w-14 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-center font-mono text-xs font-semibold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <!-- Replay Checkbox -->
+                <label class="flex items-center justify-between cursor-pointer bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800 hover:border-gray-700 transition">
+                    <span class="text-xs font-medium text-gray-300">Replay My Audio</span>
+                    <input type="checkbox" id="replayCheckbox" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-gray-700 focus:ring-0 cursor-pointer">
+                </label>
+            </div>
+
+            <!-- Section 2: Speech & Voice Settings -->
+            <div class="space-y-3">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 font-mono">Voice & Speech Engine</span>
+
+                <!-- TTS Voice Dropdown -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800">
+                    <label for="ttsVoiceSelect" class="block text-[11px] font-medium text-gray-400 mb-1.5">TTS Voice</label>
+                    <select id="ttsVoiceSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
+                        <optgroup label="🇺🇸 US Voices">
+                            <option value="af_heart" selected>af_heart (Natural Female)</option>
+                            <option value="af_bella">af_bella (Friendly Female)</option>
+                            <option value="af_nicole">af_nicole (Clear Female)</option>
+                            <option value="af_aoede">af_aoede (Expressive Female)</option>
+                            <option value="am_adam">am_adam (Deep Male)</option>
+                            <option value="am_michael">am_michael (Conversational Male)</option>
+                        </optgroup>
+                        <optgroup label="🇬🇧 UK Voices">
+                            <option value="bf_alice">bf_alice (BBC Clear Female)</option>
+                            <option value="bf_emma">bf_emma (Modern UK Female)</option>
+                            <option value="bm_george">bm_george (Classic UK Male)</option>
+                            <option value="bm_lewis">bm_lewis (Contemporary UK Male)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- TTS Speed Slider -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="ttsSpeedSlider" class="text-[11px] font-medium text-gray-400">TTS Speed</label>
+                        <span id="ttsSpeedVal" class="text-xs font-mono font-semibold text-purple-400">1.00x</span>
+                    </div>
+                    <input type="range" id="ttsSpeedSlider" min="0.5" max="1.5" step="0.05" value="1.0" 
+                           class="w-full accent-purple-500 cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Section 3: Timing, STT & AI Tolerance -->
+            <div class="space-y-3">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 font-mono">Timing & Tolerances</span>
+
+                <!-- Timer (Extra Buffer) -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="extraTimerInput" class="text-[11px] font-medium text-gray-400">Timer Buffer</label>
+                        <span id="calculatedDurationBadge" class="text-[10px] font-mono text-emerald-400">Dynamic</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <input type="number" id="extraTimerInput" min="1" max="30" value="5" 
+                               class="w-16 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-center font-mono text-xs font-semibold text-amber-400 focus:outline-none focus:border-amber-500">
+                        <span class="text-[11px] text-gray-400">+sec added to TTS</span>
+                    </div>
+                </div>
+
+                <!-- STT Tolerance Slider -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="sttToleranceSlider" class="text-[11px] font-medium text-gray-400">STT Tolerance</label>
+                        <span id="sttToleranceVal" class="text-xs font-mono font-semibold text-emerald-400">70%</span>
+                    </div>
+                    <input type="range" id="sttToleranceSlider" min="40" max="95" step="5" value="70" 
+                           class="w-full accent-emerald-500 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-1">
+                        <span>40% (Lenient)</span>
+                        <span>95% (Strict)</span>
+                    </div>
+                </div>
+
+                <!-- AI Tolerance Dropdown -->
+                <div class="bg-gray-950 px-3.5 py-2.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="strictnessSelect" class="text-[11px] font-medium text-gray-400">AI Tolerance</label>
+                        <span class="text-[10px] font-mono text-blue-400">Smart Stem</span>
+                    </div>
+                    <select id="strictnessSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <option value="friendly" selected>Friendly (Encouraging)</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="strict">Strict (Exact Match)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Footer note in sidebar -->
+            <div class="mt-auto pt-3 border-t border-gray-800/80 text-[11px] text-gray-500 leading-relaxed font-mono">
+                Continuous feedback loop powered by Ollama, Kokoro & Whisper.
+            </div>
+
+        </aside>
+
+        <!-- ======================================================== -->
+        <!-- MAIN CONTENT: Huge, Central Words to Read & Pronounce    -->
+        <!-- ======================================================== -->
+        <main class="flex-1 flex flex-col pt-3 sm:pt-4 pb-8 px-6 sm:px-10 lg:px-12 max-w-5xl mx-auto w-full gap-5">
+
+            <!-- Dynamic Recording Progress Countdown Bar -->
+            <div id="countdownContainer" class="hidden w-full bg-gray-900 rounded-full h-2 overflow-hidden border border-gray-800">
+                <div id="countdownBar" class="bg-gradient-to-r from-red-500 to-amber-500 h-full w-full transition-all ease-linear" style="width: 100%;"></div>
+            </div>
+
+            <!-- Card 1: Target Sentence (WORD TO READ) - LARGE CENTRAL DISPLAY -->
+            <section class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-gray-800/80 pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest font-mono">WORD TO READ:</span>
+                        <span id="ttsGeneratingSpinner" class="hidden text-xs text-purple-400 font-mono animate-pulse">🔊 Synthesizing speech...</span>
+                    </div>
+                    <button id="listenNativeBtn" disabled class="px-3.5 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-700 text-xs sm:text-sm text-blue-300 flex items-center gap-2 transition cursor-pointer">
+                        <span>🔊</span>
+                        <span>Listen Again (Native)</span>
+                    </button>
+                </div>
+
+                <!-- Large Center Typography for Words to Read -->
+                <div id="wordToReadText" class="min-h-[110px] text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-relaxed tracking-wide block">
+                    <span class="text-gray-600 italic font-normal text-xl sm:text-2xl">Target practice sentence will appear here...</span>
+                </div>
+            </section>
+
+            <!-- Card 2: Spoken Transcript (PRONOUNCE) - LARGE CENTRAL DISPLAY -->
+            <section class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-gray-800/80 pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest font-mono">PRONOUNCE:</span>
+                        <span id="sttRecognizingSpinner" class="hidden text-xs text-emerald-400 font-mono animate-pulse">🎙️ Transcribing with Faster-Whisper...</span>
+                    </div>
+                    <span id="similarityBadge" class="text-xs sm:text-sm font-mono font-bold px-3 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+                        Result: -
+                    </span>
+                </div>
+
+                <!-- Large Center Typography for Spoken Transcript -->
+                <div id="pronounceText" class="min-h-[110px] text-2xl sm:text-3xl lg:text-4xl font-semibold text-gray-200 leading-relaxed tracking-wide block">
+                    <span class="text-gray-600 italic font-normal text-xl sm:text-2xl">Your spoken pronunciation transcript will appear here...</span>
+                </div>
+            </section>
+
+            <!-- Feedback & Evaluation Summary Banner -->
+            <div id="feedbackBanner" class="hidden rounded-2xl p-5 text-center font-bold text-base sm:text-lg transition-all border shadow-xl"></div>
+
+        </main>
+
+    </div>
+
+    <!-- Hidden audio element for replays -->
+    <audio id="audioPlayer" class="hidden"></audio>
+
+    <script>
+        // Topic Pool for Random Prompting
+        const TOPICS = [
+            "green hills in the countryside",
+            "a tall oak tree in summer",
+            "hiking a peaceful mountain",
+            "a warm cup of morning coffee",
+            "walking a playful dog in the park",
+            "baking fresh bread at home",
+            "a quiet rainy afternoon",
+            "reading a favorite story book",
+            "buying fresh apples at the market",
+            "a friendly sleeping cat",
+            "planting flowers in the garden",
+            "looking at bright night stars",
+            "riding a bicycle down the road",
+            "a cup of hot green tea",
+            "crossing an old wooden bridge",
+            "sitting on a sunny riverbank",
+            "watching birds sing on the branch",
+            "a bright blue morning sky",
+            "eating a sweet red strawberry",
+            "cleaning a cozy room",
+            "cooking a warm vegetable soup",
+            "a soft autumn breeze",
+            "walking along the sandy beach",
+            "listening to gentle rain on the roof",
+            "wearing warm wool socks in winter",
+            "a cute puppy running in the grass",
+            "sharing a slice of chocolate cake",
+            "a busy bee visiting bright sunflowers",
+            "looking through a clear glass window",
+            "taking a quiet evening stroll",
+            "painting a picture with watercolors",
+            "a small boat floating on the lake",
+            "a colorful rainbow after summer rain",
+            "eating breakfast with my family",
+            "drinking a glass of cold water",
+            "picking yellow lemons from the tree",
+            "writing a letter to a friend",
+            "watching butterflies in the meadow",
+            "feeding birds in the backyard",
+            "a gentle walk around the quiet neighborhood"
+        ];
+
+        // State Machine Variables
+        let isRunning = false;
+        let isLoopBusy = false;
+        let currentTargetSentence = "";
+        let currentSpokenTranscript = "";
+        let cachedTtsBlob = null;
+        let cachedTtsUrl = null;
+        let cachedTtsDurationSec = 0; // Dynamic duration measured from Kokoro TTS audio
+        let mistakeCount = 0;
+        let activeAudioStream = null;
+        let activeMediaRecorder = null;
+        let recordedUserBlob = null;
+        let countdownTimer = null;
+        let audioContext = null;
+
+        // UI Element References
+        const toggleLoopBtn = document.getElementById('toggleLoopBtn');
+        const btnIcon = document.getElementById('btnIcon');
+        const btnLabel = document.getElementById('btnLabel');
+        const sentenceCountInput = document.getElementById('sentenceCountInput');
+        const replayCheckbox = document.getElementById('replayCheckbox');
+        const ttsVoiceSelect = document.getElementById('ttsVoiceSelect');
+        const ttsSpeedSlider = document.getElementById('ttsSpeedSlider');
+        const ttsSpeedVal = document.getElementById('ttsSpeedVal');
+        const extraTimerInput = document.getElementById('extraTimerInput');
+        const strictnessSelect = document.getElementById('strictnessSelect');
+        const sttToleranceSlider = document.getElementById('sttToleranceSlider');
+        const sttToleranceVal = document.getElementById('sttToleranceVal');
+        const calculatedDurationBadge = document.getElementById('calculatedDurationBadge');
+        const micStatusBadge = document.getElementById('micStatusBadge');
+        const statusIndicatorDot = document.getElementById('statusIndicatorDot');
+        const statusMessage = document.getElementById('statusMessage');
+        const topicBadge = document.getElementById('topicBadge');
+        const attemptBadge = document.getElementById('attemptBadge');
+        const countdownContainer = document.getElementById('countdownContainer');
+        const countdownBar = document.getElementById('countdownBar');
+        const wordToReadText = document.getElementById('wordToReadText');
+        const pronounceText = document.getElementById('pronounceText');
+        const listenNativeBtn = document.getElementById('listenNativeBtn');
+        const ttsGeneratingSpinner = document.getElementById('ttsGeneratingSpinner');
+        const sttRecognizingSpinner = document.getElementById('sttRecognizingSpinner');
+        const similarityBadge = document.getElementById('similarityBadge');
+        const feedbackBanner = document.getElementById('feedbackBanner');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // Status badges for upstreams
+        const statusOllama = document.getElementById('statusOllama');
+        const statusTts = document.getElementById('statusTts');
+        const statusWhisper = document.getElementById('statusWhisper');
+
+        // Sliders live text update
+        ttsSpeedSlider.addEventListener('input', (e) => {
+            ttsSpeedVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`;
+        });
+        sttToleranceSlider.addEventListener('input', (e) => {
+            sttToleranceVal.textContent = `${e.target.value}%`;
+        });
+
+        // Local Storage Settings Persistence
+        const SETTINGS_KEY = 'english_practice_app_settings_v1';
+
+        function loadStoredSettings() {
+            try {
+                const stored = localStorage.getItem(SETTINGS_KEY);
+                if (!stored) return;
+                const s = JSON.parse(stored);
+                if (s.sentenceCount !== undefined) sentenceCountInput.value = s.sentenceCount;
+                if (s.replay !== undefined) replayCheckbox.checked = !!s.replay;
+                if (s.voice !== undefined) ttsVoiceSelect.value = s.voice;
+                if (s.speed !== undefined) {
+                    ttsSpeedSlider.value = s.speed;
+                    ttsSpeedVal.textContent = `${parseFloat(s.speed).toFixed(2)}x`;
+                }
+                if (s.timer !== undefined) extraTimerInput.value = s.timer;
+                if (s.strictness !== undefined) strictnessSelect.value = s.strictness;
+                if (s.sttTolerance !== undefined) {
+                    sttToleranceSlider.value = s.sttTolerance;
+                    sttToleranceVal.textContent = `${s.sttTolerance}%`;
+                }
+            } catch (err) {
+                console.warn('Failed to load settings from localStorage:', err);
+            }
+        }
+
+        function saveStoredSettings() {
+            try {
+                const settings = {
+                    sentenceCount: parseInt(sentenceCountInput.value, 10) || 1,
+                    replay: replayCheckbox.checked,
+                    voice: ttsVoiceSelect.value,
+                    speed: parseFloat(ttsSpeedSlider.value) || 1.0,
+                    timer: parseInt(extraTimerInput.value, 10) || 5,
+                    strictness: strictnessSelect.value,
+                    sttTolerance: parseInt(sttToleranceSlider.value, 10) || 70
+                };
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            } catch (err) {
+                console.warn('Failed to save settings to localStorage:', err);
+            }
+        }
+
+        // Attach listeners to automatically save on any user adjustment
+        [sentenceCountInput, replayCheckbox, ttsVoiceSelect, ttsSpeedSlider, extraTimerInput, strictnessSelect, sttToleranceSlider].forEach(el => {
+            el.addEventListener('input', saveStoredSettings);
+            el.addEventListener('change', saveStoredSettings);
+        });
+
+        // Restore settings immediately on load
+        loadStoredSettings();
+
+        // 1. Web Audio API Beeps & Chimes (Zero External Audio Files Needed)
+        function initAudioContext() {
+            if (!audioContext) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioCtx();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        function playTone(freq, type, durationMs, startTime = 0) {
+            initAudioContext();
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioContext.currentTime + startTime);
+            gain.gain.setValueAtTime(0.15, audioContext.currentTime + startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + startTime + (durationMs / 1000));
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start(audioContext.currentTime + startTime);
+            osc.stop(audioContext.currentTime + startTime + (durationMs / 1000));
+        }
+
+        function playBeep(type) {
+            initAudioContext();
+            if (type === 'start') {
+                playTone(880, 'sine', 160);
+            } else if (type === 'retry') {
+                playTone(400, 'sine', 140, 0);
+                playTone(300, 'sine', 160, 0.18);
+            } else if (type === 'success') {
+                playTone(587.33, 'triangle', 220, 0);
+                playTone(880, 'triangle', 380, 0.22);
+            }
+        }
+
+        // 2. Health Check Poll
+        async function checkBackendHealth() {
+            try {
+                const res = await fetch('/api/health');
+                const data = await res.json();
+                
+                updateServiceBadge(statusOllama, data.services.ollama.ok, 'Ollama:11434');
+                updateServiceBadge(statusTts, data.services.tts.ok, 'Kokoro:8880');
+                updateServiceBadge(statusWhisper, data.services.whisper.ok, 'Whisper:8000');
+            } catch (e) {
+                console.warn('Health check failed:', e);
+            }
+        }
+
+        function updateServiceBadge(el, ok, label) {
+            const dot = el.querySelector('span:first-child');
+            const text = el.querySelector('span:last-child');
+            text.textContent = label;
+            if (ok) {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]';
+                el.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-800 text-emerald-300';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                el.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-950/40 border border-red-800 text-red-300';
+            }
+        }
+
+        checkBackendHealth();
+        setInterval(checkBackendHealth, 10000);
+
+        // 3. Persistent Hot Microphone Stream
+        async function ensureHotMic() {
+            if (activeAudioStream && activeAudioStream.active && activeAudioStream.getAudioTracks().some(t => t.readyState === 'live')) {
+                return activeAudioStream;
+            }
+            try {
+                activeAudioStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: false,
+                        autoGainControl: true
+                    }
+                });
+
+                initAudioContext();
+                const source = audioContext.createMediaStreamSource(activeAudioStream);
+                const silentGain = audioContext.createGain();
+                silentGain.gain.value = 0.00001;
+                source.connect(silentGain);
+                silentGain.connect(audioContext.destination);
+
+                micStatusBadge.classList.remove('hidden');
+                return activeAudioStream;
+            } catch (err) {
+                console.error('Microphone access denied:', err);
+                alert('Microphone access is required for pronunciation practice. Please grant microphone permissions.');
+                throw err;
+            }
+        }
+
+        // Helper UI status updater
+        function updateStatus(msg, color = 'blue') {
+            statusMessage.textContent = msg;
+            const dot = statusIndicatorDot;
+            if (color === 'green') {
+                dot.className = 'w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981] animate-pulse';
+            } else if (color === 'red') {
+                dot.className = 'w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] animate-pulse';
+            } else if (color === 'amber') {
+                dot.className = 'w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b] animate-pulse';
+            } else {
+                dot.className = 'w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6] animate-pulse';
+            }
+        }
+
+        // 4. STEP 1: Prompt Ollama for Random Sentence (Enforcing exact sentence count)
+        async function generatePracticeSentence(sentenceCount) {
+            const randomTopic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+            topicBadge.textContent = `Topic: "${randomTopic}"`;
+            
+            const countNum = Math.max(1, Math.min(5, parseInt(sentenceCount, 10) || 1));
+            updateStatus(`Generating ${countNum} sentence${countNum > 1 ? 's' : ''} about "${randomTopic}" with Ollama...`, 'blue');
+
+            const pluralLabel = countNum === 1 ? "1 short sentence" : `exactly ${countNum} distinct, short sentences`;
+            const goal = `Write ${pluralLabel} for beginner English practice using simple everyday words about: ${randomTopic}. Each sentence must end with a period. Output ONLY the ${countNum === 1 ? 'single sentence' : `${countNum} sentences separated by a space on one line`}, with no numbering, bullet points, quotes, or explanations.`;
+
+            const res = await fetch('/proxy/ollama/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'qwen2.5:3b',
+                    messages: [{ role: 'user', content: goal }],
+                    stream: false,
+                    options: { temperature: 0.7 }
+                })
+            });
+
+            if (!res.ok) throw new Error('Ollama request failed: ' + res.statusText);
+            const data = await res.json();
+            let rawSentence = data.message?.content?.trim() || "";
+            // Clean numbering prefixes like "1. ", "2. ", newlines, or quotes
+            rawSentence = rawSentence.replace(/^\d+[\.\)]\s*/gm, ' ').replace(/\s*\n+\s*/g, ' ');
+            rawSentence = rawSentence.replace(/^["'`]+|["'`]+$/g, '').replace(/\s+/g, ' ').trim();
+            return rawSentence;
+        }
+
+        // 5. STEP 3: Kokoro TTS Audio Generation & Dynamic Duration Measurement
+        async function synthesizeAndCacheTts(text) {
+            ttsGeneratingSpinner.classList.remove('hidden');
+            const selectedVoice = ttsVoiceSelect.value || 'af_heart';
+            const selectedSpeed = parseFloat(ttsSpeedSlider.value) || 1.0;
+
+            updateStatus(`Synthesizing with Kokoro-82M (${selectedVoice} @ ${selectedSpeed.toFixed(2)}x)...`, 'blue');
+
+            const res = await fetch('/proxy/tts/v1/audio/speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'kokoro',
+                    input: text,
+                    voice: selectedVoice,
+                    speed: selectedSpeed,
+                    response_format: 'mp3'
+                })
+            });
+
+            ttsGeneratingSpinner.classList.add('hidden');
+            if (!res.ok) throw new Error('Kokoro TTS failed: ' + res.statusText);
+
+            cachedTtsBlob = await res.blob();
+            if (cachedTtsUrl) URL.revokeObjectURL(cachedTtsUrl);
+            cachedTtsUrl = URL.createObjectURL(cachedTtsBlob);
+            listenNativeBtn.disabled = false;
+
+            try {
+                initAudioContext();
+                const arrayBuf = await cachedTtsBlob.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuf.slice(0));
+                cachedTtsDurationSec = audioBuffer.duration;
+            } catch (err) {
+                const tempAudio = new Audio(cachedTtsUrl);
+                await new Promise((resolve) => {
+                    tempAudio.onloadedmetadata = () => resolve();
+                    tempAudio.onerror = () => resolve();
+                    setTimeout(resolve, 1200);
+                });
+                cachedTtsDurationSec = tempAudio.duration || 4.0;
+            }
+
+            const extraBuffer = parseInt(extraTimerInput.value, 10) || 5;
+            const totalSec = (cachedTtsDurationSec + extraBuffer).toFixed(1);
+            calculatedDurationBadge.textContent = `${totalSec}s total`;
+        }
+
+        function playCachedTts() {
+            return new Promise((resolve) => {
+                if (!cachedTtsUrl) return resolve();
+                audioPlayer.src = cachedTtsUrl;
+                audioPlayer.onended = () => resolve();
+                audioPlayer.onerror = () => resolve();
+                audioPlayer.play().catch(() => resolve());
+            });
+        }
+
+        listenNativeBtn.addEventListener('click', () => {
+            if (cachedTtsUrl) playCachedTts();
+        });
+
+        // 6. STEP 4: Record with Dynamic Duration = (TTS Audio Length + Timer Buffer)
+        function recordWithDynamicDuration() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const stream = await ensureHotMic();
+                    const audioChunks = [];
+                    activeMediaRecorder = new MediaRecorder(stream);
+
+                    const extraTimer = parseInt(extraTimerInput.value, 10) || 5;
+                    const calculatedSec = Math.max(3, Math.ceil(cachedTtsDurationSec + extraTimer));
+                    const calculatedMs = calculatedSec * 1000;
+
+                    activeMediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+
+                    activeMediaRecorder.onstop = () => {
+                        recordedUserBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        countdownContainer.classList.add('hidden');
+                        resolve(recordedUserBlob);
+                    };
+
+                    playBeep('start');
+                    updateStatus(`🎤 Speak now! Recording for ${calculatedSec}s (${cachedTtsDurationSec.toFixed(1)}s TTS + ${extraTimer}s Timer)...`, 'red');
+
+                    countdownContainer.classList.remove('hidden');
+                    countdownBar.style.width = '100%';
+                    countdownBar.style.transition = `width ${calculatedMs}ms linear`;
+                    void countdownBar.offsetWidth;
+                    countdownBar.style.width = '0%';
+
+                    activeMediaRecorder.start();
+
+                    countdownTimer = setTimeout(() => {
+                        if (activeMediaRecorder && activeMediaRecorder.state === 'recording') {
+                            activeMediaRecorder.stop();
+                        }
+                    }, calculatedMs);
+
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        // 7. Play User Audio
+        function playUserAudio(blob) {
+            return new Promise((resolve) => {
+                const url = URL.createObjectURL(blob);
+                audioPlayer.src = url;
+                audioPlayer.onended = () => {
+                    URL.revokeObjectURL(url);
+                    resolve();
+                };
+                audioPlayer.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve();
+                };
+                audioPlayer.play().catch(() => resolve());
+            });
+        }
+
+        // 8. STEP 5: Transcribe with Faster-Whisper
+        async function transcribeUserAudio(blob) {
+            sttRecognizingSpinner.classList.remove('hidden');
+            updateStatus('Transcribing speech with Faster-Whisper...', 'blue');
+
+            const formData = new FormData();
+            formData.append('file', blob, 'recording.webm');
+            formData.append('model', 'Systran/faster-whisper-base');
+            formData.append('language', 'en');
+            formData.append('temperature', '0.0'); // Strict acoustic mode
+            formData.append('response_format', 'verbose_json');
+
+            const res = await fetch('/proxy/whisper/v1/audio/transcriptions', {
+                method: 'POST',
+                body: formData
+            });
+
+            sttRecognizingSpinner.classList.add('hidden');
+            if (!res.ok) throw new Error('Faster-Whisper transcription failed: ' + res.statusText);
+
+            const data = await res.json();
+            return data.text ? data.text.trim() : "";
+        }
+
+        // Phonetic and Word-Level Similarity Helper
+        function cleanWords(str) {
+            if (!str) return [];
+            return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+        }
+
+        function stemWord(w) {
+            return w.replace(/(ed|ing|es|s|ly|d)$/g, '');
+        }
+
+        function calculateAcousticSimilarity(target, spoken) {
+            const targetWords = cleanWords(target);
+            const spokenWords = cleanWords(spoken);
+            if (targetWords.length === 0 || spokenWords.length === 0) return 0;
+
+            let matched = 0;
+            const spokenPool = [...spokenWords];
+
+            for (const tw of targetWords) {
+                const twStem = stemWord(tw);
+                const foundIndex = spokenPool.findIndex(sw => {
+                    if (sw === tw) return true;
+                    if (stemWord(sw) === twStem) return true;
+                    if (tw.length >= 4 && sw.length >= 4 && (tw.startsWith(sw) || sw.startsWith(tw))) return true;
+                    return false;
+                });
+
+                if (foundIndex !== -1) {
+                    matched++;
+                    spokenPool.splice(foundIndex, 1);
+                }
+            }
+
+            return Math.min(100, Math.round((matched / targetWords.length) * 100));
+        }
+
+        // Visual Highlight Formatter
+        function renderHighlightedSpokenText(target, spoken) {
+            if (!spoken) return `<span class="text-red-400 italic font-normal text-xl sm:text-2xl">[No speech detected or silent]</span>`;
+
+            const targetWords = cleanWords(target);
+            const targetStems = targetWords.map(stemWord);
+            const spokenRawWords = spoken.trim().split(/\s+/).filter(Boolean);
+
+            return spokenRawWords.map(word => {
+                const cleanW = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const cleanStem = stemWord(cleanW);
+                const isExact = targetWords.includes(cleanW);
+                const isStemMatch = !isExact && targetStems.includes(cleanStem);
+
+                if (isExact) {
+                    return `<span class="inline-block text-emerald-400 font-semibold mr-3.5 mb-1">${word}</span>`;
+                } else if (isStemMatch) {
+                    return `<span class="inline-block text-teal-300 font-semibold border-b-2 border-teal-500/60 mr-3.5 mb-1" title="Acoustic/tense variation matched">${word}</span>`;
+                } else {
+                    return `<span class="inline-block text-amber-300 font-normal opacity-90 mr-3.5 mb-1">${word}</span>`;
+                }
+            }).join(' ');
+        }
+
+        // 9. STEP 6 & 7: LLM Comparison with Ollama (Friendly, Encouraging Evaluation)
+        async function comparePronunciationWithAi(target, spoken) {
+            updateStatus('Evaluating pronunciation match with Qwen 2.5...', 'blue');
+
+            const similarityScore = calculateAcousticSimilarity(target, spoken);
+            const strictness = strictnessSelect.value || 'friendly';
+            const userSttTolerance = parseInt(sttToleranceSlider.value, 10) || 70;
+
+            // Direct match if acoustic similarity reaches user's configured STT tolerance
+            if (similarityScore >= userSttTolerance) {
+                return { isMatch: true, similarityScore };
+            }
+
+            let rulesText = "";
+            if (strictness === 'friendly') {
+                rulesText = `Mode: Friendly / Encouraging (Beginner Learner).
+1. Automated Speech-to-Text (STT) frequently drops subtle acoustic endings like "-ed" (e.g. "appeared" -> "appear"), "-s", or commas. Do NOT penalize the learner for minor suffix differences, minor filler words, or accents.
+2. If the learner spoke the sentence and the core words/meaning match the target, answer YES.
+3. Answer NO ONLY if the learner missed major parts of the sentence, spoke completely different words, or was silent.`;
+            } else if (strictness === 'balanced') {
+                rulesText = `Mode: Balanced.
+1. Allow minor punctuation, slight contractions, or minor acoustic endings if the sentence was spoken cleanly.
+2. If most words are spoken correctly in order, answer YES.
+3. If multiple key words are missed or substituted, answer NO.`;
+            } else {
+                rulesText = `Mode: Strict (Advanced).
+1. Require exact word-for-word delivery.
+2. Answer YES only if nearly every word is pronounced accurately.
+3. Answer NO if words are mispronounced or omitted.`;
+            }
+
+            const prompt = `You are a supportive English pronunciation practice evaluator.
+Target Sentence: "${target}"
+Spoken Sentence (transcribed by Speech-to-Text): "${spoken}"
+Acoustic Word Similarity: ${similarityScore}%
+
+${rulesText}
+
+Answer strictly with ONLY the single word "YES" or "NO" with no extra text or punctuation.`;
+
+            const res = await fetch('/proxy/ollama/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'qwen2.5:3b',
+                    messages: [{ role: 'user', content: prompt }],
+                    stream: false,
+                    options: { temperature: 0.1 }
+                })
+            });
+
+            if (!res.ok) throw new Error('Ollama evaluation failed: ' + res.statusText);
+            const data = await res.json();
+            const raw = data.message?.content?.trim().toUpperCase() || "NO";
+
+            const isMatch = raw.includes("YES") || (strictness === 'friendly' && similarityScore >= 70);
+            return { isMatch, similarityScore };
+        }
+
+        // 10. The Main Continuous Practice Loop State Machine
+        async function runPracticeLoop() {
+            if (!isRunning) return;
+            isLoopBusy = true;
+
+            try {
+                await ensureHotMic();
+
+                let isSentenceDone = false;
+
+                // --- STEP 1: Generate Sentence ---
+                const count = parseInt(sentenceCountInput.value, 10) || 1;
+                currentTargetSentence = await generatePracticeSentence(count);
+                if (!isRunning) return;
+
+                wordToReadText.innerHTML = `<span class="text-white font-medium">${currentTargetSentence}</span>`;
+                pronounceText.innerHTML = `<span class="text-gray-500 italic font-normal text-xl sm:text-2xl">Listening will begin shortly...</span>`;
+                feedbackBanner.classList.add('hidden');
+                similarityBadge.textContent = 'Result: Evaluating';
+                similarityBadge.className = 'text-xs sm:text-sm font-mono font-bold px-3 py-1 rounded-full bg-blue-950 text-blue-400 border border-blue-800';
+
+                // --- STEP 2 & 3: Kokoro TTS Synthesis & Playback ---
+                await synthesizeAndCacheTts(currentTargetSentence);
+                if (!isRunning) return;
+
+                updateStatus('Playing native pronunciation...', 'blue');
+                await playCachedTts();
+                if (!isRunning) return;
+
+                mistakeCount = 0;
+                attemptBadge.textContent = `Attempt: ${mistakeCount + 1}/3`;
+
+                // Sub-loop for attempts on this specific sentence
+                while (!isSentenceDone && isRunning) {
+                    attemptBadge.textContent = `Attempt: ${mistakeCount + 1}/3`;
+
+                    // --- STEP 4: Record Mic with Dynamic Duration ---
+                    const audioBlob = await recordWithDynamicDuration();
+                    if (!isRunning) return;
+
+                    // --- STEP 5: Replay Check & Transcription ---
+                    let transcriptionPromise = transcribeUserAudio(audioBlob);
+
+                    if (replayCheckbox.checked) {
+                        updateStatus('Replaying your recorded audio...', 'amber');
+                        await playUserAudio(audioBlob);
+                    }
+
+                    currentSpokenTranscript = await transcriptionPromise;
+                    if (!isRunning) return;
+
+                    // Highlight words in transcript
+                    pronounceText.innerHTML = renderHighlightedSpokenText(currentTargetSentence, currentSpokenTranscript);
+
+                    // --- STEP 6 & 7: LLM Evaluation ---
+                    const { isMatch, similarityScore } = await comparePronunciationWithAi(currentTargetSentence, currentSpokenTranscript);
+                    if (!isRunning) return;
+
+                    if (isMatch) {
+                        // --- STEP 9: SUCCESS! ---
+                        isSentenceDone = true;
+                        similarityBadge.textContent = `Result: YES (Match: ${similarityScore}%)`;
+                        similarityBadge.className = 'text-xs sm:text-sm font-mono font-bold px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800';
+
+                        feedbackBanner.className = 'rounded-2xl p-5 text-center font-bold text-base sm:text-lg bg-emerald-950/80 border border-emerald-800 text-emerald-300 shadow-xl';
+                        feedbackBanner.innerHTML = `🎉 Great pronunciation (${similarityScore}% match)! Moving to the next sentence...`;
+                        feedbackBanner.classList.remove('hidden');
+
+                        playBeep('success');
+                        updateStatus(`Matched (${similarityScore}%)! Next sentence coming up...`, 'green');
+
+                        await new Promise(r => setTimeout(r, 1800));
+                        if (!isRunning) return;
+
+                    } else {
+                        // --- STEP 8: MISTAKE (NO) ---
+                        mistakeCount++;
+                        similarityBadge.textContent = `Result: NO (${similarityScore}% - Attempt ${mistakeCount}/3)`;
+                        similarityBadge.className = 'text-xs sm:text-sm font-mono font-bold px-3 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-800';
+
+                        feedbackBanner.className = 'rounded-2xl p-5 text-center font-semibold text-base sm:text-lg bg-rose-950/80 border border-rose-800 text-rose-300 shadow-xl';
+                        feedbackBanner.innerHTML = `⚠️ Match was ${similarityScore}%. Let's try speaking clearly again!`;
+                        feedbackBanner.classList.remove('hidden');
+
+                        if (mistakeCount >= 3) {
+                            updateStatus('3 attempts reached. Replaying native speech to help...', 'amber');
+                            feedbackBanner.innerHTML = `💡 Replaying native speaker guide. Listen carefully, then try again!`;
+                            await playCachedTts();
+                            mistakeCount = 0;
+                        } else {
+                            playBeep('retry');
+                            updateStatus(`Attempt ${mistakeCount}/3 missed. Re-recording in 1 second...`, 'amber');
+                        }
+
+                        await new Promise(r => setTimeout(r, 1000));
+                        if (!isRunning) return;
+                    }
+                }
+
+                // If user didn't stop, loop to Step 1 for next sentence!
+                if (isRunning) {
+                    runPracticeLoop();
+                }
+
+            } catch (err) {
+                console.error('Loop error:', err);
+                updateStatus('Error: ' + err.message, 'red');
+                stopPractice();
+            } finally {
+                isLoopBusy = false;
+            }
+        }
+
+        // Start / Stop Handlers
+        function startPractice() {
+            initAudioContext();
+            isRunning = true;
+            toggleLoopBtn.className = 'w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-base tracking-wide shadow-xl shadow-rose-950/60 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer';
+            btnIcon.textContent = '⏹';
+            btnLabel.textContent = 'Stop Practice';
+            updateStatus('Starting practice loop...', 'blue');
+            runPracticeLoop();
+        }
+
+        function stopPractice() {
+            isRunning = false;
+            if (countdownTimer) clearTimeout(countdownTimer);
+            if (activeMediaRecorder && activeMediaRecorder.state === 'recording') {
+                activeMediaRecorder.stop();
+            }
+            if (audioPlayer) {
+                audioPlayer.pause();
+            }
+            countdownContainer.classList.add('hidden');
+            toggleLoopBtn.className = 'w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-base tracking-wide shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-3 transition-all active:scale-95 cursor-pointer';
+            btnIcon.textContent = '▶';
+            btnLabel.textContent = 'Start Practice';
+            updateStatus('Practice loop stopped. Press [ Start Practice ] in the left panel to resume.', 'blue');
+        }
+
+        toggleLoopBtn.addEventListener('click', () => {
+            if (isRunning) {
+                stopPractice();
+            } else {
+                startPractice();
+            }
+        });
+    </script>
+</body>
+</html>
