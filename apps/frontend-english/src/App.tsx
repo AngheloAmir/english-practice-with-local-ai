@@ -3,10 +3,19 @@ import DrawerNavigation from "./components/navigation/DrawerNavigation";
 import Header from "./components/Header";
 import Sample from "./modules/Sample";
 import Dashboard from "./modules/dashboard";
+import Grammar from "./modules/grammar";
 import { useApp } from "./state/app";
 
 export default function App() {
   const currentmodule = useApp.use.currentModule();
+
+  function renderModule() {
+    switch ( currentmodule ) {
+      case "dashboard":  return <Dashboard />;
+      case "grammar":    return <Grammar />;
+      default:           return <Sample />;
+    }
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#334e57] font-sans antialiased text-slate-800 selection:bg-[#1a7f8b] selection:text-white flex flex-col">
@@ -17,11 +26,7 @@ export default function App() {
          <SideNavigation />
 
          <div className="flex-1 min-h-0 overflow-y-auto">
-           { currentmodule == "dashboard" ?
-              <Dashboard />
-              :
-               <Sample />
-           }
+           {renderModule()}
          </div>
 
        </div>
