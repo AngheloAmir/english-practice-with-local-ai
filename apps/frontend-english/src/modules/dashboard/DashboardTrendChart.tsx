@@ -126,17 +126,17 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
       : "";
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-5 sm:p-6 shadow-sm flex flex-col gap-3">
+    <div className="bg-[#1e2027] rounded-[24px] border border-[#292c37] p-5 sm:p-6 shadow-sm flex flex-col gap-3">
       {/* Top controls: Metric toggle & legends aligned to the right (matches reference image) */}
       <div className="flex items-center justify-end gap-3 pb-1">
         {/* Metric Toggle: Score (%) vs Duration (Mins) */}
-        <div className="flex items-center bg-slate-100/90 p-1 rounded-xl text-xs font-bold border border-slate-200">
+        <div className="flex items-center bg-[#16171d] p-1 rounded-xl text-xs font-bold border border-[#292c37]">
           <button
             onClick={() => setActiveMetric("score")}
             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               activeMetric === "score"
-                ? "bg-white text-[#177a83] shadow-xs font-extrabold"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-blue-600 text-white shadow-xs font-extrabold"
+                : "text-slate-400 hover:text-white"
             }`}
           >
             🎯 Score (%)
@@ -145,8 +145,8 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
             onClick={() => setActiveMetric("duration")}
             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               activeMetric === "duration"
-                ? "bg-white text-[#177a83] shadow-xs font-extrabold"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-blue-600 text-white shadow-xs font-extrabold"
+                : "text-slate-400 hover:text-white"
             }`}
           >
             ⏱️ Duration (mins)
@@ -156,12 +156,12 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
         {/* Module Legends */}
         <div className="flex items-center gap-3 text-xs font-bold ml-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#187e8a]"></span>
-            <span className="text-slate-700">Grammar</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span>
+            <span className="text-slate-300">Grammar</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#e2693e]"></span>
-            <span className="text-slate-700">Shadowing</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8]"></span>
+            <span className="text-slate-300">Shadowing</span>
           </div>
         </div>
       </div>
@@ -174,10 +174,10 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
           preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="warmSandGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#d5cebf" stopOpacity="0.32" />
-              <stop offset="60%" stopColor="#e8e2d8" stopOpacity="0.14" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
+            <linearGradient id="chartBlueGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
+              <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="#1e2027" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
@@ -194,14 +194,14 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
                   y1={y}
                   x2={chartWidth - padX}
                   y2={y}
-                  stroke="#f1f5f9"
+                  stroke="#282b36"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
                 />
                 <text
                   x={padX - 10}
                   y={y + 3.5}
-                  fill="#94a3b8"
+                  fill="#8b949e"
                   fontSize="10"
                   fontWeight="bold"
                   textAnchor="end"
@@ -214,14 +214,14 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
           })}
 
           {/* Shaded Area Fill below the curves */}
-          {combinedAreaPath && <path d={combinedAreaPath} fill="url(#warmSandGrad)" />}
+          {combinedAreaPath && <path d={combinedAreaPath} fill="url(#chartBlueGrad)" />}
 
           {/* Smooth Trend Lines */}
           {grammarPath && (
             <path
               d={grammarPath}
               fill="none"
-              stroke="#187e8a"
+              stroke="#3b82f6"
               strokeWidth="3.5"
               strokeLinecap="round"
             />
@@ -230,7 +230,7 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
             <path
               d={shadowingPath}
               fill="none"
-              stroke="#e2693e"
+              stroke="#38bdf8"
               strokeWidth="3.5"
               strokeLinecap="round"
             />
@@ -246,8 +246,8 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
                   cx={pt.x}
                   cy={pt.y}
                   r="4.5"
-                  fill="#ffffff"
-                  stroke="#187e8a"
+                  fill="#1e2027"
+                  stroke="#3b82f6"
                   strokeWidth="2.5"
                   className="transition-all hover:r-6 cursor-pointer"
                 />
@@ -258,8 +258,8 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
                     cx={shadowPt.x}
                     cy={shadowPt.y}
                     r="4.5"
-                    fill="#ffffff"
-                    stroke="#e2693e"
+                    fill="#1e2027"
+                    stroke="#38bdf8"
                     strokeWidth="2.5"
                     className="transition-all hover:r-6 cursor-pointer"
                   />
@@ -303,7 +303,7 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
                 key={i}
                 x={pt.x}
                 y={chartHeight - 4}
-                fill="#94a3b8"
+                fill="#8b949e"
                 fontSize="11"
                 fontWeight="bold"
                 textAnchor="middle"
@@ -317,7 +317,7 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
         {/* Floating Tooltip Card */}
         {hoveredPoint && (
           <div
-            className="absolute z-20 pointer-events-none bg-slate-900/90 backdrop-blur-md text-white text-xs rounded-xl px-3 py-2 shadow-xl border border-white/10"
+            className="absolute z-20 pointer-events-none bg-[#13141a]/95 backdrop-blur-md text-white text-xs rounded-xl px-3 py-2 shadow-xl border border-[#2e313f]"
             style={{
               left: `${(hoveredPoint.x / chartWidth) * 100}%`,
               top: `10%`,
@@ -328,17 +328,17 @@ export default function DashboardTrendChart({ timeframe }: DashboardTrendChartPr
               {hoveredPoint.date} ({hoveredPoint.dayLabel})
             </div>
             <div className="flex flex-col gap-1 text-[11px]">
-              <div className="flex items-center justify-between gap-3 text-teal-300">
+              <div className="flex items-center justify-between gap-3 text-blue-300">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-teal-400"></span> Grammar:
+                  <span className="w-2 h-2 rounded-full bg-blue-400"></span> Grammar:
                 </span>
                 <span className="font-extrabold">
                   {hoveredPoint.grammarScore}% • {hoveredPoint.grammarDuration}m
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 text-orange-300">
+              <div className="flex items-center justify-between gap-3 text-sky-300">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#e2693e]"></span> Shadowing:
+                  <span className="w-2 h-2 rounded-full bg-sky-400"></span> Shadowing:
                 </span>
                 <span className="font-extrabold">
                   {hoveredPoint.shadowingScore}% • {hoveredPoint.shadowingDuration}m

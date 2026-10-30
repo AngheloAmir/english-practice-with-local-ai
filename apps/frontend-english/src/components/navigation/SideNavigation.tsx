@@ -19,15 +19,15 @@ export default function SideNavigation() {
             <div
               className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all shadow-md ${
                 isActive
-                  ? "bg-white text-[#334e57] shadow-white/20 scale-105"
-                  : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                  ? "bg-blue-500 text-white shadow-blue-500/30 scale-105"
+                  : "bg-[#1e2027] text-slate-400 hover:bg-[#282a35] hover:text-white border border-[#2d303b]"
               }`}
             >
               {item.icon}
             </div>
             <span
               className={`text-[9px] font-extrabold tracking-wider uppercase text-center ${
-                isActive ? "text-white" : "text-white/60 group-hover:text-white"
+                isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-200"
               }`}
             >
               {item.label}

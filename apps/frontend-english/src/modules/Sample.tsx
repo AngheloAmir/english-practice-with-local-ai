@@ -167,15 +167,15 @@ export default function Sample() {
   };
 
   return <>
-       <main className="flex-1 bg-[#fcfdfe] rounded-[28px] sm:rounded-[34px] p-4 sm:p-6 lg:p-7 shadow-2xl flex flex-col xl:flex-row gap-6 overflow-hidden min-h-[720px]">
+       <main className="flex-1 bg-[#16171d] border border-[#23252e] rounded-[24px] sm:rounded-[28px] p-4 sm:p-6 lg:p-7 shadow-2xl flex flex-col xl:flex-row gap-6 overflow-hidden min-h-[720px] text-slate-100">
             
             {/* MIDDLE CONTENT: CONVERSATION AREA & CHAT BOT / READING PRACTICE */}
             <section className="flex-1 flex flex-col justify-between gap-5 min-w-0">
               
               {/* Top Mode Header / Module Banner */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#292c37]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#197985] to-[#4ebcb0] flex items-center justify-center text-white shadow-md shadow-[#197985]/20">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-900/30">
                     {activeTab === "chat" ? (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -188,14 +188,14 @@ export default function Sample() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h1 className="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">
+                      <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
                         {activeTab === "chat" ? "AI Conversational Coach" : "Reading Aloud Fluency Test"}
                       </h1>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-600 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
                         Live AI Tutor
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-xs text-slate-400 font-medium">
                       {activeTab === "chat"
                         ? "Interactive speech partner • General American Accent • Level B2/C1"
                         : "Passage pronunciation check • Speech pacing & intonation analysis"}
@@ -204,16 +204,16 @@ export default function Sample() {
                 </div>
 
                 {/* Mode Selector Pill Buttons */}
-                <div className="flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80">
+                <div className="flex items-center bg-[#1e2027] p-1 rounded-2xl border border-[#292c37]">
                   <button
                     onClick={() => {
                       setActiveTab("chat");
                       setCurrentModule("dashboard");
                     }}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       activeTab === "chat"
-                        ? "bg-white text-[#177a83] shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     💬 Conversation
@@ -223,10 +223,10 @@ export default function Sample() {
                       setActiveTab("reading");
                       setCurrentModule("reading");
                     }}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       activeTab === "reading"
-                        ? "bg-white text-[#177a83] shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     📖 Reading Practice
@@ -237,25 +237,25 @@ export default function Sample() {
               {/* VIEW 1: CONVERSATION AREA (MAIN CHAT BOT) */}
               {activeTab === "chat" && (
                 <div className="flex-1 flex flex-col justify-between gap-4">
-                  {/* Hero Practice Card (Styled like the gradient hero card in the screenshot) */}
-                  <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#177c86] via-[#208a95] to-[#f4d4c5] p-5 sm:p-6 text-white shadow-md">
+                  {/* Hero Practice Card */}
+                  <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#181a22] via-[#1e2230] to-[#1c2c4a] border border-[#2b3042] p-5 sm:p-6 text-white shadow-md">
                     <div className="relative z-10 max-w-[70%]">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
                         Speaking Session Today
                       </span>
                       <div className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1 text-white">
-                        824 <span className="text-base font-normal text-white/80">words spoken</span>
+                        824 <span className="text-base font-normal text-slate-300">words spoken</span>
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-3 mt-4">
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold">
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-slate-200 border border-white/10">
                           <svg className="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                           </svg>
                           Fluency 93%
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold">
-                          <svg className="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-slate-200 border border-white/10">
+                          <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                           </svg>
                           General rate 4.7/5
@@ -263,26 +263,26 @@ export default function Sample() {
                       </div>
                     </div>
 
-                    {/* Illustration element on the right (similar to the man with laptop in screenshot) */}
+                    {/* Illustration element on the right */}
                     <div className="absolute right-3 -bottom-2 hidden sm:flex items-end">
                       <div className="relative w-40 h-36 flex items-center justify-center">
-                        <div className="w-28 h-28 rounded-full bg-white/10 blur-xl absolute"></div>
+                        <div className="w-28 h-28 rounded-full bg-blue-500/10 blur-xl absolute"></div>
                         <div className="text-6xl select-none transform hover:scale-110 transition-transform cursor-pointer">
                           🧑‍💼
                         </div>
-                        <div className="absolute top-2 right-6 px-2 py-0.5 rounded-full bg-white text-[#177a83] text-[10px] font-bold shadow-md">
+                        <div className="absolute top-2 right-6 px-2 py-0.5 rounded-full bg-[#1e2027] text-blue-400 border border-[#292c37] text-[10px] font-bold shadow-md">
                           Elena AI
                         </div>
                       </div>
                     </div>
 
-                    {/* Pill Action Button matching screenshot "VIEW FULL STATISTIC >" */}
+                    {/* Pill Action Button */}
                     <div className="mt-5 flex items-center justify-between">
                       <button
                         onClick={() => setActiveTab("reading")}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#11626d] hover:bg-[#0d4f58] text-white text-xs font-extrabold tracking-wide uppercase transition-all shadow-lg hover:translate-x-1"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold tracking-wide uppercase transition-all shadow-lg hover:translate-x-1 cursor-pointer shadow-blue-900/40"
                       >
-                        PRACTICE READING ALOUD
+                        <span>PRACTICE READING ALOUD</span>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                         </svg>
@@ -301,14 +301,14 @@ export default function Sample() {
                       >
                         {/* Avatar */}
                         {msg.sender === "ai" ? (
-                          <div className="w-8 h-8 rounded-full bg-[#187d88] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
+                          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm shadow-blue-900/30">
                             🤖
                           </div>
                         ) : (
                           <img
                             src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face"
                             alt="User"
-                            className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200"
+                            className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#292c37]"
                           />
                         )}
 
@@ -316,14 +316,14 @@ export default function Sample() {
                         <div
                           className={`max-w-[82%] rounded-2xl p-4 shadow-sm transition-all ${
                             msg.sender === "user"
-                              ? "bg-[#187e8a] text-white rounded-tr-none"
-                              : "bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none"
+                              ? "bg-blue-600 text-white rounded-tr-none shadow-blue-900/30"
+                              : "bg-[#1e2027] text-slate-100 border border-[#292c37] rounded-tl-none"
                           }`}
                         >
                           <div className="flex items-center justify-between gap-4 mb-1">
                             <span
                               className={`text-[10px] font-bold uppercase tracking-wider ${
-                                msg.sender === "user" ? "text-white/80" : "text-[#187e8a]"
+                                msg.sender === "user" ? "text-white/80" : "text-blue-400"
                               }`}
                             >
                               {msg.sender === "user" ? "You (Learner)" : "Elena Vance (AI Coach)"}
@@ -340,17 +340,17 @@ export default function Sample() {
                           <p className="text-sm leading-relaxed font-normal">{msg.text}</p>
 
                           {/* Audio Speech Button & Feedback tags */}
-                          <div className="mt-2.5 pt-2 border-t border-black/5 flex flex-wrap items-center justify-between gap-2">
+                          <div className="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
                             {msg.sender === "ai" ? (
                               <button
                                 onClick={() => {
                                   setIsPlayingAudio(isPlayingAudio === msg.id ? null : msg.id);
                                 }}
-                                className="inline-flex items-center gap-1.5 text-xs text-[#177a83] hover:text-[#115b63] font-bold transition-colors"
+                                className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-bold transition-colors cursor-pointer"
                               >
                                 {isPlayingAudio === msg.id ? (
                                   <>
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                                     <span>Playing Audio... (1.0x)</span>
                                   </>
                                 ) : (
@@ -373,7 +373,7 @@ export default function Sample() {
                             {msg.feedback && (
                               <span
                                 className={`text-[11px] font-medium italic ${
-                                  msg.sender === "user" ? "text-white/90" : "text-slate-500"
+                                  msg.sender === "user" ? "text-white/90" : "text-slate-400"
                                 }`}
                               >
                                 💡 {msg.feedback}
@@ -396,7 +396,7 @@ export default function Sample() {
                       <button
                         key={idx}
                         onClick={() => setInputMessage(chip)}
-                        className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition-colors border border-slate-200/60"
+                        className="text-xs bg-[#1e2027] hover:bg-[#282a35] text-slate-300 px-3 py-1 rounded-full transition-colors border border-[#292c37] cursor-pointer"
                       >
                         {chip}
                       </button>
@@ -404,14 +404,14 @@ export default function Sample() {
                   </div>
 
                   {/* Chat Input Bar with Voice & Send */}
-                  <div className="relative flex items-center gap-2 bg-slate-50 rounded-2xl p-2 border border-slate-200/80 shadow-sm">
+                  <div className="relative flex items-center gap-2 bg-[#1e2027] rounded-2xl p-2 border border-[#292c37] shadow-sm">
                     {/* Voice Record Button */}
                     <button
                       onClick={toggleRecording}
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                         isRecording
-                          ? "bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30"
-                          : "bg-white text-slate-700 hover:text-[#177a83] hover:bg-slate-100 border border-slate-200"
+                          ? "bg-rose-600 text-white animate-pulse shadow-md shadow-rose-600/30"
+                          : "bg-[#16171d] text-slate-300 hover:text-white hover:bg-[#252834] border border-[#292c37]"
                       }`}
                       title="Speak your answer"
                     >
@@ -430,17 +430,17 @@ export default function Sample() {
                           ? "Listening to your voice... Speak clearly"
                           : "Type your answer or click mic to practice speaking..."
                       }
-                      className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+                      className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
                     />
 
                     {/* Send Button */}
                     <button
                       onClick={handleSendMessage}
                       disabled={!inputMessage.trim()}
-                      className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all ${
+                      className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                         inputMessage.trim()
-                          ? "bg-[#187e8a] hover:bg-[#12646e] text-white shadow-md shadow-[#187e8a]/20"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                          ? "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-900/30"
+                          : "bg-[#282b36] text-slate-500 cursor-not-allowed"
                       }`}
                     >
                       <span>Send</span>
@@ -456,26 +456,26 @@ export default function Sample() {
               {activeTab === "reading" && (
                 <div className="flex-1 flex flex-col justify-between gap-4">
                   {/* Reading Passage Test Header Card */}
-                  <div className="bg-gradient-to-r from-[#177a83] to-[#258d98] rounded-[24px] p-5 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
+                  <div className="bg-gradient-to-r from-[#181a22] via-[#1e2230] to-[#1c2c4a] border border-[#2b3042] rounded-[24px] p-5 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold uppercase tracking-wide">
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-extrabold uppercase tracking-wide text-blue-300">
                           Test Module #08
                         </span>
-                        <span className="text-white/80 text-xs">Pacing Goal: 130 WPM</span>
+                        <span className="text-slate-300 text-xs">Pacing Goal: 130 WPM</span>
                       </div>
-                      <h2 className="text-xl sm:text-2xl font-black mt-1">
+                      <h2 className="text-xl sm:text-2xl font-black mt-1 text-white">
                         Professional Communication & Empathy
                       </h2>
-                      <p className="text-xs text-white/80 mt-0.5">
+                      <p className="text-xs text-slate-300 mt-0.5">
                         Read the passage aloud clearly into your microphone. Tap any word for phonetics & pronunciation hints.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <div className="bg-white/10 backdrop-blur-md rounded-2xl px-4 py-2 text-center border border-white/10">
-                        <span className="text-[10px] uppercase font-bold text-white/70 block">Time</span>
-                        <span className="text-lg font-black">{readingTimer}s</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-300 block">Time</span>
+                        <span className="text-lg font-black text-white">{readingTimer}s</span>
                       </div>
                       <button
                         onClick={() => {
@@ -487,10 +487,10 @@ export default function Sample() {
                             }, 5000);
                           }
                         }}
-                        className={`px-5 py-2.5 rounded-full font-extrabold text-xs tracking-wider uppercase transition-all shadow-lg ${
+                        className={`px-5 py-2.5 rounded-full font-extrabold text-xs tracking-wider uppercase transition-all shadow-lg cursor-pointer ${
                           isReadingTestActive
-                            ? "bg-rose-500 hover:bg-rose-600 text-white animate-pulse"
-                            : "bg-white text-[#177a83] hover:bg-slate-100"
+                            ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
+                            : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30"
                         }`}
                       >
                         {isReadingTestActive ? "⏹ STOP TEST" : "🎙 START READING TEST"}
@@ -499,23 +499,23 @@ export default function Sample() {
                   </div>
 
                   {/* Reading Passage Interactive Area */}
-                  <div className="bg-slate-50 border border-slate-200/90 rounded-[24px] p-6 shadow-sm">
-                    <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <div className="bg-[#1e2027] border border-[#292c37] rounded-[24px] p-6 shadow-sm">
+                    <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#292c37]">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                         Passage Text (32 words)
                       </span>
                       <div className="flex items-center gap-4 text-xs font-semibold">
-                        <span className="flex items-center gap-1.5 text-emerald-600">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Accurate
+                        <span className="flex items-center gap-1.5 text-emerald-400">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Accurate
                         </span>
-                        <span className="flex items-center gap-1.5 text-amber-600">
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Stress Focus
+                        <span className="flex items-center gap-1.5 text-blue-400">
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Stress Focus
                         </span>
                       </div>
                     </div>
 
                     {/* Word-by-word interactive passage */}
-                    <div className="text-base sm:text-lg leading-loose text-slate-700 font-medium">
+                    <div className="text-base sm:text-lg leading-loose text-slate-100 font-medium">
                       {readingWords.map((word, index) => {
                         const isAttention = word.status === "needs-work";
                         return (
@@ -524,11 +524,11 @@ export default function Sample() {
                             onClick={() => setSelectedWord(word)}
                             className={`inline-block mx-1 px-1.5 py-0.5 rounded-md cursor-pointer transition-all ${
                               isAttention
-                                ? "bg-amber-100 text-amber-800 hover:bg-amber-200 underline decoration-amber-400"
-                                : "hover:bg-slate-200 text-slate-800"
+                                ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 underline decoration-blue-400"
+                                : "hover:bg-[#282a35] text-slate-100"
                             } ${
                               selectedWord?.text === word.text
-                                ? "ring-2 ring-[#177a83] bg-teal-50"
+                                ? "ring-2 ring-blue-500 bg-blue-600 text-white"
                                 : ""
                             }`}
                           >
@@ -540,23 +540,23 @@ export default function Sample() {
 
                     {/* Selected Word Helper Card */}
                     {selectedWord && (
-                      <div className="mt-4 p-3.5 bg-white border border-teal-200 rounded-xl flex items-center justify-between gap-4 text-xs shadow-sm">
+                      <div className="mt-4 p-3.5 bg-[#16171d] border border-blue-500/30 rounded-xl flex items-center justify-between gap-4 text-xs shadow-sm">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-slate-900 text-sm">{selectedWord.text}</span>
+                            <span className="font-extrabold text-white text-sm">{selectedWord.text}</span>
                             {selectedWord.ipa && (
-                              <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono font-bold">
+                              <span className="px-2 py-0.5 bg-[#1e2027] border border-[#292c37] rounded text-slate-300 font-mono font-bold">
                                 {selectedWord.ipa}
                               </span>
                             )}
                           </div>
                           {selectedWord.tip && (
-                            <p className="text-slate-600 mt-1">💡 Coach Tip: {selectedWord.tip}</p>
+                            <p className="text-slate-300 mt-1">💡 Coach Tip: {selectedWord.tip}</p>
                           )}
                         </div>
                         <button
                           onClick={() => setSelectedWord(null)}
-                          className="text-slate-400 hover:text-slate-600 font-bold px-2 py-1"
+                          className="text-slate-400 hover:text-white font-bold px-2 py-1 cursor-pointer"
                         >
                           ✕
                         </button>
@@ -565,42 +565,42 @@ export default function Sample() {
                   </div>
 
                   {/* Test Feedback & Score Evaluation */}
-                  <div className="bg-white border border-slate-200 rounded-[24px] p-5 shadow-sm">
+                  <div className="bg-[#1e2027] border border-[#292c37] rounded-[24px] p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+                      <h3 className="text-sm font-extrabold text-white uppercase tracking-wide">
                         Test Result & Audio Diagnostics
                       </h3>
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                      <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/30">
                         {readingPassageCompleted ? "Score: 94% (Passed)" : "Ready to evaluate"}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="p-3 bg-[#16171d] rounded-2xl border border-[#292c37]">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Pronunciation</span>
-                        <div className="text-xl font-black text-[#177a83] mt-1">94%</div>
+                        <div className="text-xl font-black text-blue-400 mt-1">94%</div>
                       </div>
-                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="p-3 bg-[#16171d] rounded-2xl border border-[#292c37]">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Fluency / Pace</span>
-                        <div className="text-xl font-black text-[#177a83] mt-1">128 WPM</div>
+                        <div className="text-xl font-black text-blue-400 mt-1">128 WPM</div>
                       </div>
-                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="p-3 bg-[#16171d] rounded-2xl border border-[#292c37]">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Intonation</span>
-                        <div className="text-xl font-black text-[#177a83] mt-1">91%</div>
+                        <div className="text-xl font-black text-blue-400 mt-1">91%</div>
                       </div>
-                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="p-3 bg-[#16171d] rounded-2xl border border-[#292c37]">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Accuracy</span>
-                        <div className="text-xl font-black text-emerald-600 mt-1">97%</div>
+                        <div className="text-xl font-black text-emerald-400 mt-1">97%</div>
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-[#292c37]">
                       <span>Coach note: Strong cadence and clear vowel lengths. Focus on multi-syllabic stress.</span>
                       <button
                         onClick={() => {
                           setReadingPassageCompleted(true);
                         }}
-                        className="text-[#177a83] font-bold hover:underline"
+                        className="text-blue-400 font-bold hover:underline cursor-pointer"
                       >
                         Next Test Passage →
                       </button>
@@ -610,7 +610,7 @@ export default function Sample() {
               )}
 
               {/* Bottom Quick Module Selector from config */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-2 border-t border-[#292c37] flex items-center justify-between text-xs text-slate-400">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
                   Available Learning Modules:
                 </span>
@@ -619,11 +619,11 @@ export default function Sample() {
                     <button
                       key={mod.id}
                       onClick={() => handleModuleClick(mod.id)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                         (currentModule === "reading" && mod.id === "1") ||
                         (currentModule === "dashboard" && mod.id === "0")
-                          ? "bg-[#187e8a] text-white shadow-sm"
-                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "bg-[#1e2027] hover:bg-[#282a35] text-slate-300 border border-[#292c37]"
                       }`}
                     >
                       {mod.icon} {mod.name}
@@ -633,36 +633,36 @@ export default function Sample() {
               </div>
             </section>
 
-            {/* RIGHT SIDE PANEL: SCORES, PERFORMANCE & ANALYTICS (Matches the reference photo!) */}
+            {/* RIGHT SIDE PANEL: SCORES, PERFORMANCE & ANALYTICS */}
             <aside className="w-full xl:w-[380px] shrink-0 flex flex-col gap-5">
               
-              {/* Card 1: Popularity / Fluency Rate Card (Matches the Peach Card with Gauge in screenshot) */}
-              <div className="rounded-[24px] bg-[#fdebe1] p-5 border border-[#fed6c3] shadow-sm flex flex-col justify-between">
+              {/* Card 1: Fluency Rate Card */}
+              <div className="rounded-[24px] bg-[#1e2027] p-5 border border-[#292c37] shadow-sm flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs font-extrabold text-slate-700 tracking-wide uppercase">
+                    <span className="text-xs font-extrabold text-slate-400 tracking-wide uppercase">
                       Fluency Rate
                     </span>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-4xl font-black text-slate-900 tracking-tight">87°</span>
-                      <span className="text-xs font-bold text-[#e1683d] bg-white/70 px-2 py-0.5 rounded-full shadow-sm">
+                      <span className="text-4xl font-black text-white tracking-tight">87°</span>
+                      <span className="text-xs font-bold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 rounded-full shadow-sm">
                         +4 today
                       </span>
                     </div>
                   </div>
 
-                  {/* Gauge Arc Graphic matching the reference */}
+                  {/* Gauge Arc Graphic */}
                   <div className="relative w-20 h-16 flex items-center justify-center">
                     <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
                       <path
-                        className="text-white/80"
+                        className="text-[#282b36]"
                         strokeWidth="3.5"
                         stroke="currentColor"
                         fill="none"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                       <path
-                        className="text-[#e2693e]"
+                        className="text-blue-500"
                         strokeDasharray="87, 100"
                         strokeWidth="3.5"
                         strokeLinecap="round"
@@ -671,28 +671,28 @@ export default function Sample() {
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                     </svg>
-                    <div className="absolute text-[11px] font-black text-[#e2693e]">
+                    <div className="absolute text-[11px] font-black text-blue-400">
                       87%
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-600 mt-3 leading-relaxed">
+                <p className="text-xs text-slate-300 mt-3 leading-relaxed">
                   Your speech clarity and intonation increased because of your recent reading session.{" "}
-                  <strong className="text-slate-900 font-extrabold">Keep practicing</strong> to reach the C1 level!
+                  <strong className="text-white font-extrabold">Keep practicing</strong> to reach the C1 level!
                 </p>
 
-                {/* Bottom Call to Action inside the Peach Card */}
-                <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-sm border border-white">
+                {/* Bottom Call to Action inside Card */}
+                <div className="mt-4 bg-[#16171d] rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-sm border border-[#292c37]">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🎯</span>
-                    <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                    <span className="text-[11px] font-bold text-slate-200 leading-tight">
                       Master 10 new advanced collocations
                     </span>
                   </div>
                   <button
                     onClick={() => setActiveTab("reading")}
-                    className="w-7 h-7 rounded-full bg-[#e2693e] hover:bg-[#c95830] text-white flex items-center justify-center shadow-md transition-colors shrink-0"
+                    className="w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-md transition-colors shrink-0 cursor-pointer"
                     title="Start Exercise"
                   >
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -702,13 +702,13 @@ export default function Sample() {
                 </div>
               </div>
 
-              {/* Card 2: Speaking Performance Bar Chart (Matches "Finance Performance" in screenshot) */}
-              <div className="rounded-[24px] bg-white border border-slate-100 p-5 shadow-sm">
+              {/* Card 2: Speaking Performance Bar Chart (Fabric Consumption style in screenshot) */}
+              <div className="rounded-[24px] bg-[#1e2027] border border-[#292c37] p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
+                  <span className="text-xs font-extrabold text-white uppercase tracking-wide">
                     Speaking Performance
                   </span>
-                  <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                  <div className="w-6 h-6 rounded-lg bg-[#16171d] flex items-center justify-center text-slate-400">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -716,14 +716,14 @@ export default function Sample() {
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-md bg-[#177a83] text-white flex items-center justify-center font-bold text-xs">
+                  <div className="w-6 h-6 rounded-md bg-blue-500 text-white flex items-center justify-center font-bold text-xs">
                     🎧
                   </div>
-                  <span className="text-2xl font-black text-slate-900">12 841</span>
+                  <span className="text-2xl font-black text-white">12 841</span>
                   <span className="text-xs text-slate-400 font-medium">Monthly vocal words</span>
                 </div>
 
-                {/* Vertical Bar Chart matching the cyan bars in reference image */}
+                {/* Vertical Bar Chart matching the blue bars in reference image */}
                 <div className="flex items-end justify-between gap-2 h-24 pt-2 px-1">
                   {[
                     { month: "DEC", val: 55 },
@@ -734,10 +734,10 @@ export default function Sample() {
                     { month: "MAY", val: 96 },
                   ].map((bar, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                      <div className="w-full bg-slate-100 rounded-full h-full flex items-end">
+                      <div className="w-full bg-[#16171d] rounded-full h-full flex items-end">
                         <div
                           style={{ height: `${bar.val}%` }}
-                          className="w-full rounded-full bg-[#187e8a] hover:bg-[#12646e] transition-all cursor-pointer"
+                          className="w-full rounded-full bg-blue-500 hover:bg-blue-400 transition-all cursor-pointer"
                           title={`${bar.month}: ${bar.val}% score`}
                         ></div>
                       </div>
@@ -747,10 +747,10 @@ export default function Sample() {
                 </div>
               </div>
 
-              {/* Card 3: Top Performers / Peer Leaderboard (Matches "TOP performers" in screenshot) */}
-              <div className="rounded-[24px] bg-white border border-slate-100 p-5 shadow-sm">
+              {/* Card 3: Top Performers / Peer Leaderboard */}
+              <div className="rounded-[24px] bg-[#1e2027] border border-[#292c37] p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
+                  <span className="text-xs font-extrabold text-white uppercase tracking-wide">
                     Top Performers
                   </span>
                   <span className="text-[10px] font-bold text-slate-400">Weekly CEFR</span>
@@ -782,37 +782,37 @@ export default function Sample() {
                         <img
                           src={user.avatar}
                           alt={user.name}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                          className="w-8 h-8 rounded-full object-cover border border-[#292c37]"
                         />
                         <div>
-                          <div className="text-xs font-bold text-slate-800">{user.name}</div>
+                          <div className="text-xs font-bold text-white">{user.name}</div>
                           <div className="text-[10px] text-slate-400 flex items-center gap-1">
                             {user.status === "Online" && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                             )}
                             {user.status}
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs font-extrabold text-[#e2693e]">{user.score}</span>
+                      <span className="text-xs font-extrabold text-blue-400">{user.score}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Card 4: Accent & Region Targeting (Matches "Targeting by region" in screenshot) */}
-              <div className="rounded-[24px] bg-white border border-slate-100 p-4 shadow-sm flex items-center justify-between gap-3">
+              {/* Card 4: Accent & Region Targeting */}
+              <div className="rounded-[24px] bg-[#1e2027] border border-[#292c37] p-4 shadow-sm flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-xl">
+                  <div className="w-10 h-10 rounded-2xl bg-[#16171d] border border-[#292c37] flex items-center justify-center text-xl">
                     🇺🇸
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Target Accent</span>
-                    <span className="text-xs font-extrabold text-slate-800">General American</span>
+                    <span className="text-xs font-extrabold text-white">General American</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-xs font-black text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-500/30">
                     93% Match
                   </span>
                 </div>

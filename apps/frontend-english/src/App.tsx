@@ -20,7 +20,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#334e57] font-sans antialiased text-slate-800 selection:bg-[#1a7f8b] selection:text-white flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-[#121316] font-sans antialiased text-slate-100 selection:bg-blue-600 selection:text-white flex flex-col">
        <Header />
        <DrawerNavigation />
 

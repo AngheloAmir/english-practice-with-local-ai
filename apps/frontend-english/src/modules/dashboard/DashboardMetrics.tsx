@@ -42,59 +42,74 @@ export default function DashboardMetrics({ timeframe, setTimeframe }: DashboardM
       {/* 3 Metric Cards matching reference design */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 flex-1 max-w-4xl">
         {/* Card 1: Total Practice Time */}
-        <div className="bg-[#147a82] rounded-2xl p-4 text-white shadow-sm flex flex-col justify-between min-h-[92px]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">
-            Total Practice Time
-          </span>
-          <div className="mt-1">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              {stats.totalTime}
+        <div className="bg-[#1e2027] border border-[#292c37] rounded-2xl p-4 text-white shadow-sm flex items-center gap-3.5 min-h-[92px]">
+          <div className="w-11 h-11 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 text-base font-bold">
+            ⏱️
+          </div>
+          <div className="flex flex-col justify-between flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Total Practice Time
             </span>
-            <div className="text-[10px] sm:text-[11px] text-emerald-200 font-medium mt-0.5 flex items-center gap-1">
-              <span>↗</span> +18% vs previous period
+            <div className="mt-0.5">
+              <span className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                {stats.totalTime}
+              </span>
+              <div className="text-[10px] sm:text-[11px] text-blue-400 font-medium mt-0.5 flex items-center gap-1">
+                <span>↗</span> +18% vs previous period
+              </div>
             </div>
           </div>
         </div>
 
         {/* Card 2: Average Score */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-xs flex flex-col justify-between min-h-[92px]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Average Score
-          </span>
-          <div className="mt-1">
-            <span className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-              {stats.avgScore}%
+        <div className="bg-[#1e2027] border border-[#292c37] rounded-2xl p-4 shadow-xs flex items-center gap-3.5 min-h-[92px]">
+          <div className="w-11 h-11 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 text-base font-bold">
+            🎯
+          </div>
+          <div className="flex flex-col justify-between flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Average Score
             </span>
-            <div className="text-[10px] sm:text-[11px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
-              <span>↑</span> +3.5% accuracy gain
+            <div className="mt-0.5">
+              <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                {stats.avgScore}%
+              </span>
+              <div className="text-[10px] sm:text-[11px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                <span>↑</span> +3.5% accuracy gain
+              </div>
             </div>
           </div>
         </div>
 
         {/* Card 3: Sessions Completed */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-xs flex flex-col justify-between min-h-[92px]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Sessions Completed
-          </span>
-          <div className="mt-1">
-            <span className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-              {stats.totalSessions}
+        <div className="bg-[#1e2027] border border-[#292c37] rounded-2xl p-4 shadow-xs flex items-center gap-3.5 min-h-[92px]">
+          <div className="w-11 h-11 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 text-base font-bold">
+            🏆
+          </div>
+          <div className="flex flex-col justify-between flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Sessions Completed
             </span>
-            <div className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5">
-              {timeframe === "weekly" ? "Across 7 days" : "Across 30 days"}
+            <div className="mt-0.5">
+              <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                {stats.totalSessions}
+              </span>
+              <div className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5">
+                {timeframe === "weekly" ? "Across 7 days" : "Across 30 days"}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Top-Right Timeframe Switcher */}
-      <div className="self-end md:self-start flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 shrink-0">
+      <div className="self-end md:self-start flex items-center bg-[#1e2027] p-1 rounded-2xl border border-[#292c37] shrink-0">
         <button
           onClick={() => setTimeframe("weekly")}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
             timeframe === "weekly"
-              ? "bg-white text-[#177a83] shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "text-slate-400 hover:text-white"
           }`}
         >
           📅 Weekly View
@@ -103,8 +118,8 @@ export default function DashboardMetrics({ timeframe, setTimeframe }: DashboardM
           onClick={() => setTimeframe("monthly")}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
             timeframe === "monthly"
-              ? "bg-white text-[#177a83] shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "text-slate-400 hover:text-white"
           }`}
         >
           🗓️ Monthly View

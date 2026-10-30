@@ -4,12 +4,48 @@ export default function SpeechPassageCard() {
   const words = useSpeechModule.use.words();
   const activeWordIndex = useSpeechModule.use.activeWordIndex();
   const playWordAtIndex = useSpeechModule.use.playWordAtIndex();
+  const countdown = useSpeechModule.use.countdown();
 
   return (
-    <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-9 shadow-sm flex flex-col justify-center transition-all">
-      <div className="min-h-[80px] flex flex-wrap items-center gap-x-2.5 gap-y-3.5 leading-relaxed text-lg sm:text-xl md:text-2xl font-serif text-slate-800">
+    <section className="relative bg-[#1e2027] border border-[#292c37] rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between lg:h-[390px] transition-all">
+      {/* Top Bar: Countdown Timer Badge in Top-Right */}
+      <div className="flex items-center justify-end w-full pb-2">
+        <div
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono font-semibold transition-all select-none ${
+            countdown !== null
+              ? "bg-blue-600/25 border border-blue-500/50 text-blue-300 shadow-sm shadow-blue-500/20 ring-1 ring-blue-400/40 animate-pulse"
+              : "bg-[#16171d] border border-[#292c37] text-slate-400"
+          }`}
+          title={
+            countdown !== null
+              ? `Audio playback starting in ${countdown.toFixed(1)}s`
+              : "1.5s countdown timer before playback starts"
+          }
+        >
+          <svg
+            className={`w-3.5 h-3.5 ${countdown !== null ? "text-blue-400 animate-spin" : "text-slate-500"}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              strokeWidth="2"
+              strokeDasharray="32"
+              strokeDashoffset={countdown !== null ? "16" : "0"}
+            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l3 3" />
+          </svg>
+          <span>{countdown !== null ? `${countdown.toFixed(1)}s` : "1.5s"}</span>
+        </div>
+      </div>
+
+      {/* Middle Passage Text with scrollable area for fixed height container */}
+      <div className="my-auto overflow-y-auto max-h-[300px] pr-2 flex flex-wrap items-center gap-x-2 sm:gap-x-2.5 gap-y-2 sm:gap-y-2.5 leading-loose text-lg sm:text-xl md:text-2xl font-serif text-slate-100">
         {words.map((word, idx) => {
-          // Exactly one word gets the block highlight when it is played from spokenWords
+          // Exactly one word gets the block highlight when it is played from spokenWords or clicked
           const isCurrentlyPlaying = activeWordIndex === idx;
 
           return (
@@ -17,10 +53,10 @@ export default function SpeechPassageCard() {
               key={`${word}-${idx}`}
               type="button"
               onClick={() => playWordAtIndex(idx)}
-              className={`relative inline-block cursor-pointer px-2.5 py-1 rounded-xl transition-all select-none ${
+              className={`relative inline-block cursor-pointer px-2 py-0.5 rounded-xl transition-all select-none ${
                 isCurrentlyPlaying
-                  ? "bg-amber-100/90 text-amber-900 border border-amber-300 font-medium shadow-xs scale-105 ring-1 ring-amber-300/50"
-                  : "text-slate-800 border border-transparent hover:text-[#147a82] hover:bg-slate-50"
+                  ? "bg-[#242838] text-blue-400 border border-blue-500/30 font-medium shadow-sm scale-[1.02]"
+                  : "text-slate-100 border border-transparent hover:text-blue-400 hover:bg-[#242838]/60"
               }`}
               title="Click to hear this word"
             >

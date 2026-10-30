@@ -27,10 +27,10 @@ export default function Header() {
             </div>
 
 
-            <nav className="flex items-center gap-6 sm:gap-10 text-xs sm:text-sm font-bold tracking-wider uppercase text-white/70">
+            <nav className="flex items-center gap-6 sm:gap-10 text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-400">
                 <button
                     //onClick={() => setActiveTab("chat")}
-                    className="hidden lg:inline-block transition-colors hover:text-white"
+                    className="hidden lg:inline-block transition-colors hover:text-blue-400 cursor-pointer"
                 >
                     ABOUT
                 </button>
