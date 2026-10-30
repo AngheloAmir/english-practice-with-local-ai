@@ -4,6 +4,7 @@ import Header from "./components/Header";
 import Sample from "./modules/Sample";
 import Dashboard from "./modules/dashboard";
 import Grammar from "./modules/grammar";
+import Speech from "./modules/speech";
 import { useApp } from "./state/app";
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
     switch ( currentmodule ) {
       case "dashboard":  return <Dashboard />;
       case "grammar":    return <Grammar />;
+      case "speechshadowing": return <Speech />
       default:           return <Sample />;
     }
   }
