@@ -15,12 +15,13 @@ const DIFFICULTY_SENTENCES: Record<string, string> = {
 };
 
 export interface SpeechModule {
-    // Current sentence & tokenized words
+    // Current sentence & tokenized words (restricted max length to avoid card overflow)
     sentence: string;
     words: string[];
 
     // TTS generated audio content
-    spokenSentence: any; // URL or AudioBuffer for complete sentence
+    spokenSentence: any; // URL or AudioBuffer for complete sentence (speech.ts:L23)
+    spokenSentenceDuration: number; // Duration of TTS sentence output in seconds
     spokenWords: any[];  // Array of Audio URLs / Buffers matching words array (played one word at a time)
 
     // STT & User recording
@@ -40,11 +41,22 @@ export interface SpeechModule {
     countdown: number | null;
     countdownMode: 'sentence' | 'perword' | null;
 
+    // Timed Auto-play loop states
+    // 1. Checks TTS sentence output time then adds 3s
+    // 2. Starts recording, auto-stops after (TTS time + 3s)
+    // 3. Asynchronously sends to STT engine while playing back recorded audio
+    // 4. Shows STT output & accuracy match, then repeats until stopped
+    isTimedAutoplayRunning: boolean;
+    timedAutoplayPhase: 'idle' | 'recording' | 'playback_stt';
+    timedRecordRemaining: number;
+    timedPlaybackProgress: number;
+
     // Setters
     setSentence: (sentence: string) => void;
     setWords: (words: string[]) => void;
 
     setSpokenSentence: (audio: any) => void;
+    setSpokenSentenceDuration: (duration: number) => void;
     setSpokenWords: (spokenWords: any[]) => void;
 
     setUserDetectedWords: (detected: string) => void;
@@ -70,12 +82,22 @@ export interface SpeechModule {
     startRecordingTest: () => Promise<void>;
     stopRecordingTest: () => void;
     generateNewSentence: () => void;
+
+    // Timed Auto Play Loop Actions
+    startTimedAutoplay: () => Promise<void>;
+    stopTimedAutoplay: () => void;
+    runTimedAutoplayCycle: (session: number) => Promise<void>;
 }
 
 const defaultSentence = PRACTICE_SENTENCES[1];
 
 let playbackSessionId = 0;
 let countdownTimerId: ReturnType<typeof setInterval> | null = null;
+
+let timedAutoplaySessionId = 0;
+let timedRecordIntervalId: ReturnType<typeof setInterval> | null = null;
+let timedPlaybackIntervalId: ReturnType<typeof setInterval> | null = null;
+let timedBreatherTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const clearActiveCountdown = () => {
     if (countdownTimerId !== null) {
@@ -84,11 +106,28 @@ const clearActiveCountdown = () => {
     }
 };
 
+const clearTimedAutoplayTimers = () => {
+    if (timedRecordIntervalId !== null) {
+        clearInterval(timedRecordIntervalId);
+        timedRecordIntervalId = null;
+    }
+    if (timedPlaybackIntervalId !== null) {
+        clearInterval(timedPlaybackIntervalId);
+        timedPlaybackIntervalId = null;
+    }
+    if (timedBreatherTimeoutId !== null) {
+        clearTimeout(timedBreatherTimeoutId);
+        timedBreatherTimeoutId = null;
+    }
+};
+
 const speechmodule = create<SpeechModule>()((set, get) => ({
     sentence: defaultSentence,
-    words: defaultSentence.split(/\s+/).filter(Boolean),
+    // Restrict words to 35 max to avoid text overflow in the fixed-height card
+    words: defaultSentence.split(/\s+/).filter(Boolean).slice(0, 35),
 
     spokenSentence: null,
+    spokenSentenceDuration: 4, // Default 4 seconds for single TTS sentence
     spokenWords: [],
 
     userDetectedWords: defaultSentence,
@@ -105,13 +144,21 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     countdown: null,
     countdownMode: null,
 
+    isTimedAutoplayRunning: false,
+    timedAutoplayPhase: 'idle',
+    timedRecordRemaining: 0,
+    timedPlaybackProgress: 0,
+
     setSentence: (sentence: string) => {
-        const words = sentence.trim().split(/\s+/).filter(Boolean);
-        set({ sentence, words, activeWordIndex: null });
+        // Restrict maximum words so passage does not scroll or overflow fixed-height card
+        const words = sentence.trim().split(/\s+/).filter(Boolean).slice(0, 35);
+        const cappedSentence = words.join(' ');
+        set({ sentence: cappedSentence, words, activeWordIndex: null });
     },
-    setWords: (words: string[]) => set({ words }),
+    setWords: (words: string[]) => set({ words: words.slice(0, 35) }),
 
     setSpokenSentence: (spokenSentence: any) => set({ spokenSentence }),
+    setSpokenSentenceDuration: (spokenSentenceDuration: number) => set({ spokenSentenceDuration }),
     setSpokenWords: (spokenWords: any[]) => set({ spokenWords }),
 
     setUserDetectedWords: (userDetectedWords: string) => set({ userDetectedWords }),
@@ -122,16 +169,18 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     setUseraudio: (useraudio: 'autoplay' | '') => set({ useraudio }),
     setDifficulty: (difficulty: 'Practice' | 'Beginner' | 'Intermediate' | 'Advanced') => {
         clearActiveCountdown();
+        get().stopTimedAutoplay();
         playbackSessionId++;
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
 
         const nextSentence = DIFFICULTY_SENTENCES[difficulty] || PRACTICE_SENTENCES[0];
+        const nextWords = nextSentence.trim().split(/\s+/).filter(Boolean).slice(0, 35);
         set({
             difficulty,
-            sentence: nextSentence,
-            words: nextSentence.trim().split(/\s+/).filter(Boolean),
+            sentence: nextWords.join(' '),
+            words: nextWords,
             activeWordIndex: null,
             isPlaying: false,
             countdown: null,
@@ -156,6 +205,9 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
      */
     playFullSentence: async () => {
         const { isPlaying, countdown, countdownMode, playmode } = get();
+
+        // Stop any active timed auto-play loop
+        get().stopTimedAutoplay();
 
         // If currently playing or counting down for sentence, clicking pauses/cancels it
         if ((isPlaying && playmode === 'sentence') || (countdown !== null && countdownMode === 'sentence')) {
@@ -258,6 +310,9 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     playSpeechShadowing: async () => {
         const { isPlaying, countdown, countdownMode, playmode } = get();
 
+        // Stop any active timed auto-play loop
+        get().stopTimedAutoplay();
+
         // If currently playing or counting down for perword, clicking pauses/cancels it
         if ((isPlaying && playmode === 'perword') || (countdown !== null && countdownMode === 'perword')) {
             clearActiveCountdown();
@@ -345,6 +400,9 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         const { words, isPlaying, countdown } = get();
         if (index < 0 || index >= words.length) return;
 
+        // Stop any active timed auto-play loop
+        get().stopTimedAutoplay();
+
         // Invalidate active playback/countdown session
         clearActiveCountdown();
         playbackSessionId++;
@@ -382,10 +440,10 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     },
 
     /**
-     * Do Test / Recording:
-     * Listens to user microphone audio, then sends to STT to get transcribed words.
+     * Manual Do Test / Recording:
      */
     startRecordingTest: async () => {
+        get().stopTimedAutoplay();
         set({ isRecording: true, userDetectedWords: 'Listening to your speech...', sttAccuracyScore: null });
 
         setTimeout(() => {
@@ -403,11 +461,186 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     },
 
     /**
-     * New Sentences:
-     * Cycles to another sentence, resets playback & timer states.
+     * Record Timed Auto play Loop:
+     * 1. Checks TTS sentence output time (the single spokenSentence: speech.ts:L23) then adds 3 seconds.
+     * 2. Starts recording; auto-stops when time is reached.
+     * 3. Sends to STT engine (in async) while playing back recorded audio.
+     * 4. Shows STT output and checks match with passage (pronunciation checking).
+     * 5. Repeats until the "Stop" button is clicked.
+     */
+    startTimedAutoplay: async () => {
+        if (get().isTimedAutoplayRunning) {
+            get().stopTimedAutoplay();
+            return;
+        }
+
+        // Cancel any manual playback, countdown, or recording
+        clearActiveCountdown();
+        playbackSessionId++;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+
+        const session = ++timedAutoplaySessionId;
+        set({
+            isTimedAutoplayRunning: true,
+            isPlaying: false,
+            activeWordIndex: null,
+            countdown: null,
+            countdownMode: null,
+        });
+
+        get().runTimedAutoplayCycle(session);
+    },
+
+    stopTimedAutoplay: () => {
+        timedAutoplaySessionId++;
+        clearTimedAutoplayTimers();
+        set({
+            isTimedAutoplayRunning: false,
+            timedAutoplayPhase: 'idle',
+            isRecording: false,
+            timedRecordRemaining: 0,
+            timedPlaybackProgress: 0,
+        });
+    },
+
+    runTimedAutoplayCycle: async (session: number) => {
+        if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) {
+            return;
+        }
+
+        // STEP 1: Check TTS sentence output time (spokenSentence: speech.ts:L23) then add 3 seconds
+        const { words, spokenSentence, spokenSentenceDuration } = get();
+        const baseTtsDuration = (spokenSentence && typeof spokenSentence.duration === 'number' && spokenSentence.duration > 0)
+            ? Math.round(spokenSentence.duration)
+            : (spokenSentenceDuration || Math.max(3, Math.round(words.length * 0.45 + 1)));
+
+        // Target record duration: TTS sentence duration + 3 seconds
+        const recordDurationSeconds = baseTtsDuration + 3;
+
+        // STEP 2: Start recording; the recording auto stops based on step 1
+        // Note: Ready for navigator.mediaDevices.getUserMedia and MediaRecorder.start()
+        set({
+            timedAutoplayPhase: 'recording',
+            isRecording: true,
+            timedRecordRemaining: recordDurationSeconds,
+            userDetectedWords: 'Recording your voice for timed loop...',
+            sttAccuracyScore: null,
+            timedPlaybackProgress: 0,
+        });
+
+        let countdownSec = recordDurationSeconds;
+
+        await new Promise<void>((resolve) => {
+            timedRecordIntervalId = setInterval(() => {
+                if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) {
+                    clearTimedAutoplayTimers();
+                    resolve();
+                    return;
+                }
+
+                countdownSec -= 1;
+                set({ timedRecordRemaining: Math.max(0, countdownSec) });
+
+                if (countdownSec <= 0) {
+                    if (timedRecordIntervalId !== null) {
+                        clearInterval(timedRecordIntervalId);
+                        timedRecordIntervalId = null;
+                    }
+                    resolve();
+                }
+            }, 1000);
+        });
+
+        if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) {
+            return;
+        }
+
+        // Auto-stop recording
+        // Note: Ready for MediaRecorder.stop() to generate recorded audio Blob
+        set({
+            isRecording: false,
+            timedAutoplayPhase: 'playback_stt',
+            timedRecordRemaining: 0,
+        });
+
+        // STEP 3: Send to STT engine (in async) while playing back recorded audio
+        // Note: Ready for async fetch POST to Whisper STT server with recorded audio Blob
+        // e.g. const sttPromise = fetch('/v1/audio/transcriptions', { method: 'POST', body: formData })...
+        const asyncSttPromise = new Promise<{ text: string; score: number }>((resolve) => {
+            // Simulated asynchronous Whisper STT evaluation
+            setTimeout(() => {
+                const targetText = get().sentence;
+                resolve({
+                    text: targetText,
+                    score: 94,
+                });
+            }, 1800);
+        });
+
+        // Handle async STT result without blocking playback
+        asyncSttPromise.then((result) => {
+            if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) return;
+            // STEP 4: Show output of STT and check match with passage (pronunciation checking)
+            set({
+                userDetectedWords: result.text,
+                sttAccuracyScore: result.score,
+            });
+        });
+
+        // Simultaneously play back the recorded audio (simulated 3.5s playback)
+        // Note: Ready for recordedAudioElement.play() with timeupdate listener
+        const playbackDurationMs = 3500;
+        const startTime = Date.now();
+        set({ timedPlaybackProgress: 0 });
+
+        await new Promise<void>((resolve) => {
+            timedPlaybackIntervalId = setInterval(() => {
+                if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) {
+                    clearTimedAutoplayTimers();
+                    resolve();
+                    return;
+                }
+
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(100, Math.round((elapsed / playbackDurationMs) * 100));
+                set({ timedPlaybackProgress: progress });
+
+                if (elapsed >= playbackDurationMs) {
+                    if (timedPlaybackIntervalId !== null) {
+                        clearInterval(timedPlaybackIntervalId);
+                        timedPlaybackIntervalId = null;
+                    }
+                    set({ timedPlaybackProgress: 100 });
+                    resolve();
+                }
+            }, 100);
+        });
+
+        if (session !== timedAutoplaySessionId || !get().isTimedAutoplayRunning) {
+            return;
+        }
+
+        // Brief 1.5s pause to inspect pronunciation score before next cycle
+        await new Promise<void>((resolve) => {
+            timedBreatherTimeoutId = setTimeout(() => {
+                resolve();
+            }, 1500);
+        });
+
+        // STEP 5: Repeat until the "Stop" button is clicked
+        if (session === timedAutoplaySessionId && get().isTimedAutoplayRunning) {
+            get().runTimedAutoplayCycle(session);
+        }
+    },
+
+    /**
+     * New Sentences: Cycles sentence and resets timer/loop states.
      */
     generateNewSentence: () => {
         clearActiveCountdown();
+        get().stopTimedAutoplay();
         playbackSessionId++;
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
@@ -416,10 +649,11 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         const currentSentence = get().sentence;
         const remaining = PRACTICE_SENTENCES.filter((s) => s !== currentSentence);
         const next = remaining.length > 0 ? remaining[Math.floor(Math.random() * remaining.length)] : PRACTICE_SENTENCES[0];
+        const nextWords = next.trim().split(/\s+/).filter(Boolean).slice(0, 35);
 
         set({
-            sentence: next,
-            words: next.trim().split(/\s+/).filter(Boolean),
+            sentence: nextWords.join(' '),
+            words: nextWords,
             activeWordIndex: null,
             isPlaying: false,
             countdown: null,

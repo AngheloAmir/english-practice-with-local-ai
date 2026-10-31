@@ -7,7 +7,7 @@ export default function SpeechPassageCard() {
   const countdown = useSpeechModule.use.countdown();
 
   return (
-    <section className="relative bg-[#1e2027] border border-[#292c37] rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between lg:h-[390px] transition-all">
+    <section className="relative bg-[#1e2027] border border-[#292c37] rounded-3xl p-6 sm:p-7 shadow-sm lg:h-[440px] overflow-hidden transition-all">
       {/* Top Bar: Countdown Timer Badge in Top-Right */}
       <div className="flex items-center justify-end w-full pb-2">
         <div
@@ -42,8 +42,8 @@ export default function SpeechPassageCard() {
         </div>
       </div>
 
-      {/* Middle Passage Text with scrollable area for fixed height container */}
-      <div className="my-auto overflow-y-auto max-h-[300px] pr-2 flex flex-wrap items-center gap-x-2 sm:gap-x-2.5 gap-y-2 sm:gap-y-2.5 leading-loose text-lg sm:text-xl md:text-2xl font-serif text-slate-100">
+      {/* Passage Text: Top-down flow, left-aligned (not vertically centered) */}
+      <div className="mt-4 flex flex-wrap items-baseline justify-start text-left gap-x-2.5 sm:gap-x-3 gap-y-2 sm:gap-y-3 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl font-serif text-slate-100 select-none">
         {words.map((word, idx) => {
           // Exactly one word gets the block highlight when it is played from spokenWords or clicked
           const isCurrentlyPlaying = activeWordIndex === idx;
@@ -53,7 +53,7 @@ export default function SpeechPassageCard() {
               key={`${word}-${idx}`}
               type="button"
               onClick={() => playWordAtIndex(idx)}
-              className={`relative inline-block cursor-pointer px-2 py-0.5 rounded-xl transition-all select-none ${
+              className={`relative inline-block cursor-pointer px-2 py-0.5 rounded-xl transition-all select-none text-left ${
                 isCurrentlyPlaying
                   ? "bg-[#242838] text-blue-400 border border-blue-500/30 font-medium shadow-sm scale-[1.02]"
                   : "text-slate-100 border border-transparent hover:text-blue-400 hover:bg-[#242838]/60"
