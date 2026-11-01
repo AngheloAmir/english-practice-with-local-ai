@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createSelectors } from '../lib/_zustand';
 import {
     PLAYDELAY,
+    SHADOWING,
     TTS_SPEED_CONFIG,
     TTS_VOICE_CONFIG,
     type TTSSpeed,
@@ -15,6 +16,12 @@ import {
     type DifficultyLevel,
     type SentenceLength,
 } from './prompts/speech';
+
+export interface WordTimestampSlice {
+    word: string;
+    startTime: number;
+    endTime: number;
+}
 
 const PRACTICE_FALLBACKS: Record<DifficultyLevel, string[]> = {
     Practice: [
@@ -50,7 +57,7 @@ export interface SpeechModule {
     spokenSentenceUrl: string | null; // URL for complete synthesized sentence audio
     spokenSentenceBlob: Blob | null;  // Raw audio Blob
     spokenSentenceDuration: number;  // Exact duration in seconds
-    spokenWords: any[];
+    spokenWords: WordTimestampSlice[]; // Word-level start/end timestamps sliced from single shadowing audio
 
     // STT & User recording
     userDetectedWords: string;
@@ -134,6 +141,7 @@ let timedBreatherTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let sharedAudioContext: AudioContext | null = null;
 let activeBufferSource: AudioBufferSourceNode | null = null;
 let cachedSentenceAudioBuffer: AudioBuffer | null = null;
+let cachedShadowingAudioBuffer: AudioBuffer | null = null;
 
 // Persistent hot mic & keep-alive references
 let activeAudioStream: MediaStream | null = null;
@@ -348,46 +356,172 @@ function playAudioBuffer(buffer: AudioBuffer, onEnded?: () => void): Promise<voi
     });
 }
 
-// In-memory cache for word-level Kokoro TTS decoded AudioBuffers
-const wordAudioBufferCache: Map<string, AudioBuffer> = new Map();
+/**
+ * Plays a specific word time-slice [startTime, endTime] from the single sentence AudioBuffer
+ * with a micro GainNode fade-in/fade-out envelope to prevent clicks/pops at slice boundaries.
+ */
+function playAudioBufferSlice(
+    buffer: AudioBuffer,
+    startTime: number,
+    endTime: number,
+    onEnded?: () => void
+): Promise<void> {
+    return new Promise((resolve) => {
+        const ctx = getSharedAudioContext();
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+        }
+        ensureOutputKeepAlive(ctx);
 
-async function getOrSynthesizeWordAudioBuffer(
-    word: string,
-    voice: string,
-    speed: number
-): Promise<AudioBuffer | null> {
-    const cleanWord = word.replace(/[.,!?;:"]+/g, '').trim();
-    if (!cleanWord) return null;
+        if (activeBufferSource) {
+            try {
+                activeBufferSource.stop();
+                activeBufferSource.disconnect();
+            } catch {}
+            activeBufferSource = null;
+        }
 
-    const cacheKey = `${voice}_${speed}_${cleanWord.toLowerCase()}`;
-    if (wordAudioBufferCache.has(cacheKey)) {
-        return wordAudioBufferCache.get(cacheKey)!;
+        // Pad word boundaries into the surrounding silence gaps (35ms before, 120ms after)
+        // so consonant attacks and natural vocal breath releases finish completely without abrupt cuts
+        const padBefore = 0.035;
+        const padAfter = 0.12;
+        const sliceStart = Math.max(0, startTime - padBefore);
+        const sliceEnd = Math.min(buffer.duration, Math.max(sliceStart + 0.12, endTime + padAfter));
+        const sliceDuration = sliceEnd - sliceStart;
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+
+        // Smooth fade envelope inside the silence margins to prevent any boundary clicks
+        const gainNode = ctx.createGain();
+        const now = ctx.currentTime;
+        const fadeIn = Math.min(0.018, sliceDuration * 0.15);
+        const fadeOut = Math.min(0.045, sliceDuration * 0.25);
+
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.linearRampToValueAtTime(1.0, now + fadeIn);
+        gainNode.gain.setValueAtTime(1.0, Math.max(now + fadeIn, now + sliceDuration - fadeOut));
+        gainNode.gain.linearRampToValueAtTime(0.0001, now + sliceDuration);
+
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        activeBufferSource = source;
+
+        let isDone = false;
+        const finish = () => {
+            if (!isDone) {
+                isDone = true;
+                if (activeBufferSource === source) {
+                    activeBufferSource = null;
+                }
+                try {
+                    gainNode.disconnect();
+                } catch {}
+                if (onEnded) onEnded();
+                resolve();
+            }
+        };
+
+        source.onended = finish;
+        try {
+            source.start(0, sliceStart, sliceDuration);
+        } catch (err) {
+            console.warn('AudioBufferSource slice start failed:', err);
+            finish();
+        }
+    });
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
     }
+    return bytes.buffer;
+}
+
+/**
+ * Phonemizes the full sentence in context via Kokoro's /dev/phonemize endpoint
+ * (preserving contextual pronunciations like "The" -> /ði/ vs /ðə/, "a" -> /ɐ/),
+ * then formats a single captioned_speech input with [word](/ipa/) and [pause:0.5s] between words.
+ * This produces 1 single audio file where every word has authentic in-sentence pronunciation
+ * AND finishes naturally into silence with zero abrupt cut/stopping sound.
+ */
+async function buildPhonemePausedShadowingInput(text: string, uiWords: string[]): Promise<string> {
+    if (uiWords.length === 0) return text;
 
     try {
-        const res = await fetch('/proxy/tts/v1/audio/speech', {
+        const res = await fetch('/proxy/tts/dev/phonemize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'kokoro',
-                input: cleanWord,
-                voice,
-                speed,
-                response_format: 'mp3',
+                text,
+                language: 'a',
             }),
         });
-        if (!res.ok) return null;
 
-        const arrayBuf = await res.arrayBuffer();
-        const ctx = getSharedAudioContext();
-        const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
+        if (res.ok) {
+            const data = await res.json();
+            const rawPhonemes: string = data?.phonemes || '';
+            const phonemeTokens = rawPhonemes.trim().split(/\s+/).filter(Boolean);
 
-        wordAudioBufferCache.set(cacheKey, decoded);
-        return decoded;
+            if (phonemeTokens.length === uiWords.length) {
+                return uiWords
+                    .map((word, idx) => {
+                        // Strip trailing punctuation from phoneme token so Kokoro inline [/ipa/] parses cleanly
+                        const cleanIpa = phonemeTokens[idx].replace(/[.,!?;:"'()-]+$/g, '');
+                        const cleanWord = word.replace(/[[\]()/]/g, '');
+                        return cleanIpa ? `[${cleanWord}](/${cleanIpa}/)` : cleanWord;
+                    })
+                    .join(' [pause:0.5s] ');
+            }
+        }
     } catch (err) {
-        console.warn(`Failed to synthesize word "${cleanWord}" with Kokoro:`, err);
-        return null;
+        console.warn('Phonemize fallback to paused text:', err);
     }
+
+    // Fallback if phonemize is unavailable: insert pauses between words in single synthesis
+    return uiWords.join(' [pause:0.5s] ');
+}
+
+/**
+ * Aligns Kokoro /dev/captioned_speech phoneme timestamps to the UI words array,
+ * filtering out standalone punctuation tokens (",", ".", "!", "?").
+ */
+function alignTimestampsToWords(
+    uiWords: string[],
+    rawTimestamps: Array<{ word: string; start_time: number; end_time: number }>,
+    totalDuration: number
+): WordTimestampSlice[] {
+    const wordTokens = (rawTimestamps || []).filter((t) => /[a-zA-Z0-9]/.test(t.word));
+    const count = uiWords.length;
+    if (count === 0) return [];
+
+    const avgWordDuration = totalDuration / count;
+
+    return uiWords.map((uiWord, idx) => {
+        const matchedToken = wordTokens[idx];
+        if (matchedToken && typeof matchedToken.start_time === 'number' && typeof matchedToken.end_time === 'number') {
+            const startTime = Math.max(0, matchedToken.start_time);
+            const endTime = Math.min(totalDuration, Math.max(startTime + 0.08, matchedToken.end_time));
+            return {
+                word: uiWord,
+                startTime,
+                endTime,
+            };
+        }
+
+        // Proportional fallback if timestamp array length differs
+        const fallbackStart = Math.max(0, idx * avgWordDuration);
+        const fallbackEnd = Math.min(totalDuration, (idx + 1) * avgWordDuration);
+        return {
+            word: uiWord,
+            startTime: fallbackStart,
+            endTime: Math.max(fallbackStart + 0.08, fallbackEnd),
+        };
+    });
 }
 
 const speechmodule = create<SpeechModule>()((set, get) => ({
@@ -434,9 +568,11 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         const words = sentence.trim().split(/\s+/).filter(Boolean).slice(0, 35);
         const cappedSentence = words.join(' ');
         cachedSentenceAudioBuffer = null;
+        cachedShadowingAudioBuffer = null;
         set({
             sentence: cappedSentence,
             words,
+            spokenWords: [],
             activeWordIndex: null,
             userDetectedWords: '',
             userRecordingUrl: null,
@@ -448,8 +584,9 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     setWords: (words: string[]) => set({ words: words.slice(0, 35) }),
 
     setVoiceGender: (voiceGender: TTSVoiceGender) => {
-        set({ voiceGender });
+        set({ voiceGender, spokenWords: [] });
         cachedSentenceAudioBuffer = null;
+        cachedShadowingAudioBuffer = null;
         // Re-synthesize existing sentence with new voice in the background
         const currentSentence = get().sentence;
         if (currentSentence) {
@@ -505,12 +642,14 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         playbackSessionId++;
         stopActiveAudioPlayback();
         cachedSentenceAudioBuffer = null;
+        cachedShadowingAudioBuffer = null;
 
         const { difficulty, sentenceLength } = get();
         const { prompt, topic } = buildSentencePrompt(difficulty, sentenceLength);
 
         set({
             isGeneratingSentence: true,
+            spokenWords: [],
             activeWordIndex: null,
             isPlaying: false,
             countdown: null,
@@ -569,38 +708,76 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     },
 
     /**
-     * Synthesizes audio using local Kokoro TTS engine (/proxy/tts/v1/audio/speech)
-     * and immediately decodes it into an AudioBuffer for 0ms latency playback.
+     * Synthesizes:
+     * 1. Single-audio shadowing buffer at SHADOWING speed (0.7) via /dev/phonemize + /dev/captioned_speech
+     *    with [word](/ipa/) [pause:0.5s] so every word retains contextual sentence pronunciation AND
+     *    finishes naturally into silence without any abrupt stopping/cutting sound.
+     * 2. Continuous full-sentence audio at user's selected speed for "Listen (Full Sentence)".
      */
     synthesizeKokoroTts: async (text: string): Promise<string | null> => {
         if (!text) return null;
 
-        const { voiceGender, speechSpeed } = get();
+        const { voiceGender, speechSpeed, words } = get();
         const selectedVoice = TTS_VOICE_CONFIG[voiceGender];
         const selectedSpeed = TTS_SPEED_CONFIG[speechSpeed];
 
         set({ isSynthesizingTts: true });
 
         try {
-            const res = await fetch('/proxy/tts/v1/audio/speech', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'kokoro',
-                    input: text,
-                    voice: selectedVoice,
-                    speed: selectedSpeed,
-                    response_format: 'mp3',
-                }),
-            });
-
-            if (!res.ok) throw new Error(`Kokoro TTS failed with status: ${res.status}`);
-
-            const arrayBuf = await res.arrayBuffer();
             const ctx = getSharedAudioContext();
             ensureOutputKeepAlive(ctx);
 
-            // Pre-decode into AudioBuffer directly for zero-latency playback
+            // 1. Synthesize single shadowing audio + word timestamps at SHADOWING speed (0.7) if not already cached
+            const needShadowingSynthesis = !cachedShadowingAudioBuffer || get().spokenWords.length === 0;
+
+            const captionedPromise = needShadowingSynthesis
+                ? (async () => {
+                      const shadowingInput = await buildPhonemePausedShadowingInput(text, words);
+                      const res = await fetch('/proxy/tts/dev/captioned_speech', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                              model: 'kokoro',
+                              input: shadowingInput,
+                              voice: selectedVoice,
+                              speed: SHADOWING,
+                              response_format: 'mp3',
+                              stream: false,
+                          }),
+                      });
+                      if (!res.ok) throw new Error(`Kokoro captioned_speech failed: ${res.status}`);
+                      const data = await res.json();
+                      const arrayBuf = base64ToArrayBuffer(data.audio);
+                      const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
+                      cachedShadowingAudioBuffer = decoded;
+                      const alignedSlices = alignTimestampsToWords(words, data.timestamps || [], decoded.duration);
+                      set({ spokenWords: alignedSlices });
+                      return { arrayBuf, decoded };
+                  })()
+                : Promise.resolve(null);
+
+            // 2. Fetch the continuous full sentence at selectedSpeed in parallel with the phoneme-paused shadowing audio
+            const [sentenceRes] = await Promise.all([
+                fetch('/proxy/tts/v1/audio/speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'kokoro',
+                        input: text,
+                        voice: selectedVoice,
+                        speed: selectedSpeed,
+                        response_format: 'mp3',
+                    }),
+                }),
+                captionedPromise.catch((e) => {
+                    console.warn('Captioned shadowing synthesis warning:', e);
+                    return null;
+                }),
+            ]);
+
+            if (!sentenceRes.ok) throw new Error(`Kokoro TTS failed with status: ${sentenceRes.status}`);
+
+            const arrayBuf = await sentenceRes.arrayBuffer();
             const decodedBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
             cachedSentenceAudioBuffer = decodedBuffer;
 
@@ -614,15 +791,6 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
                 spokenSentenceDuration: durationSeconds,
                 isSynthesizingTts: false,
             });
-
-            // Pre-fetch and pre-decode Kokoro TTS AudioBuffers for EACH word in background
-            const uniqueWords = Array.from(
-                new Set(text.split(/\s+/).map((w) => w.replace(/[.,!?;:"]+/g, '').trim()))
-            ).filter(Boolean);
-
-            for (const word of uniqueWords) {
-                getOrSynthesizeWordAudioBuffer(word, selectedVoice, selectedSpeed).catch(() => {});
-            }
 
             return audioUrl;
         } catch (err) {
@@ -690,67 +858,58 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         const ctx = getSharedAudioContext();
         ensureOutputKeepAlive(ctx);
 
-        // Primary: Zero-latency playback of pre-decoded AudioBuffer (never skips first word!)
-        if (cachedSentenceAudioBuffer) {
-            await playAudioBuffer(cachedSentenceAudioBuffer, () => {
-                if (currentSession === playbackSessionId) {
-                    set({ isPlaying: false, activeWordIndex: null });
-                }
-            });
-            return;
+        // Continuous loop until user manually stops it (Pause Listening) or changes action
+        while (get().isPlaying && currentSession === playbackSessionId) {
+            // Primary: Zero-latency playback of pre-decoded AudioBuffer (never skips first word!)
+            if (cachedSentenceAudioBuffer) {
+                await playAudioBuffer(cachedSentenceAudioBuffer);
+            } else if (spokenSentenceUrl) {
+                // If buffer was not ready yet, decode the blob or play via audio element
+                await new Promise<void>((resolve) => {
+                    try {
+                        const audio = new Audio(spokenSentenceUrl);
+                        activeAudioElement = audio;
+
+                        const finish = () => {
+                            if (activeAudioElement === audio) {
+                                activeAudioElement = null;
+                            }
+                            resolve();
+                        };
+
+                        audio.onended = finish;
+                        audio.onerror = finish;
+                        audio.play().catch(finish);
+                    } catch {
+                        resolve();
+                    }
+                });
+            } else if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                // Fallback: Browser speech synthesis
+                await new Promise<void>((resolve) => {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(sentence);
+                    utterance.rate = 0.9;
+                    utterance.onend = () => resolve();
+                    utterance.onerror = () => resolve();
+                    window.speechSynthesis.speak(utterance);
+                });
+            } else {
+                await new Promise((r) => setTimeout(r, 2000));
+            }
+
+            if (currentSession !== playbackSessionId || !get().isPlaying) break;
+            // Deliberate 1.0s pause between repetitions so listener can absorb and repeat
+            await new Promise((r) => setTimeout(r, 1000));
         }
 
-        // If buffer was not ready yet, decode the blob or play via audio element
-        if (spokenSentenceUrl) {
-            try {
-                const audio = new Audio(spokenSentenceUrl);
-                activeAudioElement = audio;
-
-                audio.onended = () => {
-                    if (currentSession === playbackSessionId) {
-                        set({ isPlaying: false, activeWordIndex: null });
-                    }
-                };
-
-                audio.onerror = () => {
-                    if (currentSession === playbackSessionId) {
-                        set({ isPlaying: false, activeWordIndex: null });
-                    }
-                };
-
-                await audio.play();
-                return;
-            } catch (err) {
-                console.warn('Audio element play failed, falling back to speech synthesis:', err);
-            }
-        }
-
-        // Fallback: Browser speech synthesis
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(sentence);
-            utterance.rate = 0.9;
-            utterance.onend = () => {
-                if (currentSession === playbackSessionId) {
-                    set({ isPlaying: false, activeWordIndex: null });
-                }
-            };
-            utterance.onerror = () => {
-                if (currentSession === playbackSessionId) {
-                    set({ isPlaying: false, activeWordIndex: null });
-                }
-            };
-            window.speechSynthesis.speak(utterance);
-        } else {
-            await new Promise((r) => setTimeout(r, 2000));
-            if (currentSession === playbackSessionId) {
-                set({ isPlaying: false, activeWordIndex: null });
-            }
+        if (currentSession === playbackSessionId) {
+            set({ isPlaying: false, activeWordIndex: null });
         }
     },
 
     /**
-     * Speech Shadowing: Word-by-word with natural delay to repeat.
+     * Speech Shadowing: Word-by-word sliced from the single SHADOWING (0.7) sentence audio.
      */
     playSpeechShadowing: async () => {
         const { isPlaying, countdown, countdownMode, playmode } = get();
@@ -800,34 +959,45 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     },
 
     executeShadowingPlayback: async (currentSession: number) => {
-        const { words, voiceGender, speechSpeed } = get();
-        const selectedVoice = TTS_VOICE_CONFIG[voiceGender];
-        const selectedSpeed = TTS_SPEED_CONFIG[speechSpeed];
+        const { words, sentence } = get();
 
         const ctx = getSharedAudioContext();
         ensureOutputKeepAlive(ctx);
 
         set({ isPlaying: true, playmode: 'perword' });
 
-        for (let i = 0; i < words.length; i++) {
-            if (!get().isPlaying || currentSession !== playbackSessionId) break;
-            set({ activeWordIndex: i });
+        // Ensure captioned shadowing audio buffer & word slices are ready
+        if (!cachedShadowingAudioBuffer || get().spokenWords.length === 0) {
+            await get().synthesizeKokoroTts(sentence);
+        }
 
-            const rawWord = words[i];
-            const wordBuffer = await getOrSynthesizeWordAudioBuffer(rawWord, selectedVoice, selectedSpeed);
+        const slices = get().spokenWords;
+        const buffer = cachedShadowingAudioBuffer || cachedSentenceAudioBuffer;
 
-            if (currentSession !== playbackSessionId || !get().isPlaying) break;
+        // Loop through the sentence continuously until user manually stops it or changes action
+        while (get().isPlaying && currentSession === playbackSessionId) {
+            for (let i = 0; i < words.length; i++) {
+                if (!get().isPlaying || currentSession !== playbackSessionId) break;
+                set({ activeWordIndex: i });
 
-            if (wordBuffer) {
-                stopActiveAudioPlayback();
-                await playAudioBuffer(wordBuffer);
-            } else {
-                await new Promise((r) => setTimeout(r, 450));
+                const slice = slices[i];
+                if (buffer && slice) {
+                    stopActiveAudioPlayback();
+                    await playAudioBufferSlice(buffer, slice.startTime, slice.endTime);
+                } else {
+                    await new Promise((r) => setTimeout(r, 450));
+                }
+
+                if (currentSession !== playbackSessionId || !get().isPlaying) break;
+                // Deliberate shadowing pause between words so user can repeat the word
+                await new Promise((r) => setTimeout(r, 650));
             }
 
-            if (currentSession !== playbackSessionId || !get().isPlaying) break;
-            // Deliberate shadowing pause between words so user can repeat the word
-            await new Promise((r) => setTimeout(r, 650));
+            // Brief pause at the end of the sentence before starting the loop again
+            if (get().isPlaying && currentSession === playbackSessionId) {
+                set({ activeWordIndex: null });
+                await new Promise((r) => setTimeout(r, 1000));
+            }
         }
 
         if (currentSession === playbackSessionId) {
@@ -836,10 +1006,11 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
     },
 
     /**
-     * Play Single Word: Triggered when user clicks an individual word token (Kokoro TTS).
+     * Play Single Word: Triggered when user clicks an individual word token.
+     * Plays the exact word slice from the single SHADOWING sentence AudioBuffer.
      */
     playWordAtIndex: async (index: number) => {
-        const { words, isPlaying, countdown, voiceGender, speechSpeed } = get();
+        const { words, sentence, isPlaying, countdown } = get();
         if (index < 0 || index >= words.length) return;
 
         warmUpHotEngines().catch(() => {});
@@ -861,15 +1032,16 @@ const speechmodule = create<SpeechModule>()((set, get) => ({
         // Set the active clicked word highlight immediately in the UI
         set({ activeWordIndex: index });
 
-        // Play the Kokoro TTS audio for that word using zero-latency AudioBuffer
-        const rawWord = words[index];
-        const selectedVoice = TTS_VOICE_CONFIG[voiceGender];
-        const selectedSpeed = TTS_SPEED_CONFIG[speechSpeed];
+        // Ensure captioned shadowing buffer & timestamps are ready
+        if (!cachedShadowingAudioBuffer || get().spokenWords.length === 0) {
+            await get().synthesizeKokoroTts(sentence);
+        }
 
-        const wordBuffer = await getOrSynthesizeWordAudioBuffer(rawWord, selectedVoice, selectedSpeed);
-        if (wordBuffer) {
+        const slice = get().spokenWords[index];
+        const buffer = cachedShadowingAudioBuffer || cachedSentenceAudioBuffer;
+        if (buffer && slice) {
             stopActiveAudioPlayback();
-            await playAudioBuffer(wordBuffer);
+            await playAudioBufferSlice(buffer, slice.startTime, slice.endTime);
         }
     },
 

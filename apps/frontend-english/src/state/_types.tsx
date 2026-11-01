@@ -99,10 +99,10 @@ export const TTS_SPEED_CONFIG: Record<TTSSpeed, number> = {
 };
 
 export const TTS_VOICE_CONFIG: Record<TTSVoiceGender, string> = {
-    male: 'am_adam',
+    male: 'am_michael',
     female: 'af_heart',
 };
 
 export const PLAYDELAY = 1.0;
-export const SHADOWING = 0.7;
+export const SHADOWING = 0.8;
 
