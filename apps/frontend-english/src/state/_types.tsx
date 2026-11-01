@@ -84,3 +84,25 @@ export const MODULESCOREMOCKDATA: ModuleScore[] = [
         ]
     }
 ];
+
+// ==========================================
+// Speech & TTS Microservice Configurations
+// ==========================================
+
+export type TTSSpeed = 'slow' | 'normal' | 'fast';
+export type TTSVoiceGender = 'female' | 'male';
+
+export const TTS_SPEED_CONFIG: Record<TTSSpeed, number> = {
+    slow:   0.7,
+    normal: 0.8,
+    fast:   1.0,
+};
+
+export const TTS_VOICE_CONFIG: Record<TTSVoiceGender, string> = {
+    male: 'am_adam',
+    female: 'af_heart',
+};
+
+export const PLAYDELAY = 1.0;
+export const SHADOWING = 0.7;
+

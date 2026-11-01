@@ -1,8 +1,10 @@
+import { PLAYDELAY } from "../../state/_types";
 import { useSpeechModule } from "../../state/speech";
 
 export default function SpeechPassageCard() {
   const words = useSpeechModule.use.words();
   const activeWordIndex = useSpeechModule.use.activeWordIndex();
+  const playmode = useSpeechModule.use.playmode();
   const playWordAtIndex = useSpeechModule.use.playWordAtIndex();
   const countdown = useSpeechModule.use.countdown();
 
@@ -19,7 +21,7 @@ export default function SpeechPassageCard() {
           title={
             countdown !== null
               ? `Audio playback starting in ${countdown.toFixed(1)}s`
-              : "1.5s countdown timer before playback starts"
+              : `${PLAYDELAY.toFixed(1)}s countdown timer before playback starts`
           }
         >
           <svg
@@ -38,33 +40,35 @@ export default function SpeechPassageCard() {
             />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l3 3" />
           </svg>
-          <span>{countdown !== null ? `${countdown.toFixed(1)}s` : "1.5s"}</span>
+          <span>{countdown !== null ? `${countdown.toFixed(1)}s` : `${PLAYDELAY.toFixed(1)}s`}</span>
         </div>
       </div>
 
-      {/* Passage Text: Top-down flow, left-aligned (not vertically centered) */}
-      <div className="mt-4 flex flex-wrap items-baseline justify-start text-left gap-x-2.5 sm:gap-x-3 gap-y-2 sm:gap-y-3 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl font-serif text-slate-100 select-none">
-        {words.map((word, idx) => {
-          // Exactly one word gets the block highlight when it is played from spokenWords or clicked
-          const isCurrentlyPlaying = activeWordIndex === idx;
+      {/* Passage Text: Top-down flow, left-aligned */}
+    
+        <div className="mt-4 flex flex-wrap items-baseline justify-start text-left gap-x-2.5 sm:gap-x-3 gap-y-2 sm:gap-y-3 leading-relaxed sm:leading-loose text-base sm:text-lg md:text-xl font-serif text-slate-100 select-none">
+          {words.map((word, idx) => {
+            // Word highlight box is shown ONLY during Speech Shadowing (perword) or manual word clicks, never during full-sentence playback
+            const isCurrentlyPlaying = activeWordIndex === idx && playmode !== "sentence";
 
-          return (
-            <button
-              key={`${word}-${idx}`}
-              type="button"
-              onClick={() => playWordAtIndex(idx)}
-              className={`relative inline-block cursor-pointer px-2 py-0.5 rounded-xl transition-all select-none text-left ${
-                isCurrentlyPlaying
-                  ? "bg-[#242838] text-blue-400 border border-blue-500/30 font-medium shadow-sm scale-[1.02]"
-                  : "text-slate-100 border border-transparent hover:text-blue-400 hover:bg-[#242838]/60"
-              }`}
-              title="Click to hear this word"
-            >
-              {word}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={`${word}-${idx}`}
+                type="button"
+                onClick={() => playWordAtIndex(idx)}
+                className={`relative inline-block cursor-pointer px-2 py-0.5 rounded-xl transition-all select-none text-left ${
+                  isCurrentlyPlaying
+                    ? "bg-[#242838] text-blue-400 border border-blue-500/30 font-medium shadow-sm scale-[1.02]"
+                    : "text-slate-100 border border-transparent hover:text-blue-400 hover:bg-[#242838]/60"
+                }`}
+                title="Click to hear this word"
+              >
+                {word}
+              </button>
+            );
+          })}
+        </div>
+      
     </section>
   );
 }

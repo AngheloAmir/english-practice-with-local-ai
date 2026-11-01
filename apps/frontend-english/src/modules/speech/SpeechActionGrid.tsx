@@ -1,4 +1,4 @@
-import { useSpeechModule } from "../../state/speech";
+import { useSpeechModule, warmUpHotEngines } from "../../state/speech";
 
 export default function SpeechActionGrid() {
   const isPlaying = useSpeechModule.use.isPlaying();
@@ -14,12 +14,22 @@ export default function SpeechActionGrid() {
   const isShadowingCountingDown = countdown !== null && countdownMode === "perword";
   const isShadowingPlaying = isPlaying && playmode === "perword";
 
+  const handlePlayFullSentence = () => {
+    warmUpHotEngines();
+    playFullSentence();
+  };
+
+  const handlePlaySpeechShadowing = () => {
+    warmUpHotEngines();
+    playSpeechShadowing();
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Button 1: Listen (Full TTS sentence with 1.5s countdown delay) */}
       <button
         type="button"
-        onClick={playFullSentence}
+        onClick={handlePlayFullSentence}
         className={`h-[52px] py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-3 transition-all duration-200 shadow-md active:scale-[0.98] cursor-pointer ${
           isSentenceCountingDown
             ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/40 ring-2 ring-blue-300 animate-pulse"
@@ -50,7 +60,7 @@ export default function SpeechActionGrid() {
       {/* Button 2: Speech Shadowing (Word by word pacing with 1.5s countdown delay) */}
       <button
         type="button"
-        onClick={playSpeechShadowing}
+        onClick={handlePlaySpeechShadowing}
         className={`h-[52px] py-3.5 px-5 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-3 transition-all duration-200 shadow-md active:scale-[0.98] cursor-pointer ${
           isShadowingCountingDown
             ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/40 ring-2 ring-blue-300 animate-pulse"
